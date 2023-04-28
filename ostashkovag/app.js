@@ -19,6 +19,7 @@ const config = {
 };
 
 const client = new pg.Client(config);
+const pool = new pg.Pool(config);
 
 app.post('/api/getEvents', jsonParser, (request, response) => {
     var {page, sort} = request.body;
@@ -36,7 +37,7 @@ app.post('/api/getEvents', jsonParser, (request, response) => {
     var queryCount = `SELECT * From public."Event"
     WHERE isarchive = false;`;
 
-    client.query(queryCount, (err, res)=>{
+    pool.query(queryCount, (err, res)=>{
         if(err) {
                 console.log(err);
                 response.status(404);
@@ -45,7 +46,7 @@ app.post('/api/getEvents', jsonParser, (request, response) => {
         countPage = Math.ceil(res.rowCount/countEvents);
     })
 
-    client.query(query, (err, res)=>{
+    pool.query(query, (err, res)=>{
         if(err) {
             console.log(err);
             response.status(404);
@@ -61,7 +62,7 @@ app.post('/api/login' , jsonParser, (request, response) => {
     var query = `SELECT * FROM public."User"
     WHERE email like '${email}';`;
 
-    client.query(query, (err, res)=>{
+    pool.query(query, (err, res)=>{
     if(err) {
         console.log(err);
         response.status(404);
@@ -90,7 +91,7 @@ app.post('/api/signup' , jsonParser, (request, response) => {
     (name, phone, email, password, role) VALUES
     ('${name}', '${phone}', '${email}', '${password}', 'user');`;
 
-    client.query(query, (err, res) =>{
+    pool.query(query, (err, res) =>{
         if(err && err.code === '23505'){
             console.log(err);
             response.status(404).send({text: "email or phone already exist"});
@@ -117,7 +118,7 @@ function verifyToken(request, response, next) {
         if (err) {
           response.status(401).send({});
         } else if (decoded.exp <= Date.now()) {
-          client.query(
+            pool.query(
             `Select * from public."User" where email like '${decoded.login}'`,
             (err, results) => {
               console.warn("test");
@@ -145,7 +146,7 @@ function verifyAdminToken(request, response, next) {
         if (err) {
           response.status(401).send({});
         } else if (decoded.exp <= Date.now()) {
-          client.query(
+            pool.query(
             `Select * from public."User" where email like '${decoded.login}'`,
             (err, results) => {
               console.warn("test");
@@ -166,7 +167,7 @@ function verifyAdminToken(request, response, next) {
 
 function main() {
     try{
-        client.connect();
+        pool.connect();
         app.listen(PORT);
         console.log("Соединение c базой данных успешно");
     }catch(err){
