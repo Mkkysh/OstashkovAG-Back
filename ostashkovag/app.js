@@ -20,7 +20,7 @@ const config = {
 
 const client = new pg.Client(config);
 
-app.post('/api/getEvents', verifyAdminToken, jsonParser, (request, response) => {
+app.post('/api/getEvents', jsonParser, (request, response) => {
     var {page, sort} = request.body;
     page = !page ? 0 : page;
     sort = !sort ? "DESC" : sort;
@@ -39,6 +39,7 @@ app.post('/api/getEvents', verifyAdminToken, jsonParser, (request, response) => 
     client.query(queryCount, (err, res)=>{
         if(err) {
                 console.log(err);
+                response.status(404);
                 return;
         }
         countPage = Math.ceil(res.rowCount/countEvents);
@@ -81,6 +82,30 @@ app.post('/api/login' , jsonParser, (request, response) => {
     }
     else response.status(404).send({ key: undefined });
 })
+});
+
+app.post('/api/signup' , jsonParser, (request, response) => {
+    var { email, password, name, phone } = request.body;
+    var query = `INSERT INTO public."User" 
+    (name, phone, email, password, role) VALUES
+    ('${name}', '${phone}', '${email}', '${password}', 'user');`;
+
+    client.query(query, (err, res) =>{
+        if(err && err.code === '23505'){
+            console.log(err);
+            response.status(404).send({text: "email or phone already exist"});
+            return;
+        }
+        else if(err){
+            console.log(err);
+            response.status(404);
+            return;
+        }
+        else {
+            response.status(200).send({text: "success"})
+        }
+    });
+
 });
 
 function verifyToken(request, response, next) {
