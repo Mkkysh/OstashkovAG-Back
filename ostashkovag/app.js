@@ -109,6 +109,63 @@ app.post('/api/signup' , jsonParser, (request, response) => {
 
 });
 
+app.post('/api/user/addTracker', verifyToken, jsonParser, (request, response) => {
+    const id = response.locals.id;
+    var { event_id } = request.body;
+
+    var query = `INSERT INTO public."EventUserTracking"
+    (id_event, id_user) VALUES
+    (${event_id}, ${id});`;
+
+    pool.query(query, (err, res) => {
+        if(err){
+            console.log(err);
+            response.status(404);
+            return;
+        }
+        response.status(200).send({text: "success"})
+    });
+
+});
+
+app.get('/api/user/getTracker', verifyToken, jsonParser, (request, response) => {
+    const id = response.locals.id;
+    
+    var query = `SELECT ev.id, ev.name, ev.description,
+    ev.datebegin, ev.datefinal, ev.type FROM public."User" AS us
+    INNER JOIN public."EventUserTracking" AS eut ON
+    us.id = eut.id_user INNER JOIN public."Event" AS ev 
+    ON eut.id_event = ev.id WHERE us.id = ${id};`;
+
+    pool.query(query, (err, res)=>{
+        if(err){
+            console.log(err);
+            response.status(404);
+            return;
+        }
+        response.status(200).send(res.rows);
+    });
+
+});
+
+app.delete('/api/user/deleteTracker', verifyToken, jsonParser, (request, response) => {
+    const id = response.locals.id;
+
+    var { event_id } = request.body;
+    
+    var query = `DELETE FROM public."EventUserTracking"
+    WHERE id_user = ${id} AND id_event = ${event_id};`;
+
+    pool.query(query, (err, res)=>{
+        if(err){
+            console.log(err);
+            response.status(404);
+            return;
+        }
+        response.status(200).send({text: "success"});
+    });
+});
+
 function verifyToken(request, response, next) {
     const header = request.headers["authorization"];
     console.log("got " + header);
@@ -176,5 +233,3 @@ function main() {
 }
 
 main();
-
-
