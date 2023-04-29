@@ -195,7 +195,38 @@ app.post('/api/user/addRequestEvent', verifyToken, jsonParser, (request, respons
 
   query += `'${description}', ${id}, '${type}');`;
 
-  console.log(query)
+  pool.query(query, (err, res)=>{
+      if(err){
+        console.log(err);
+        response.status(404);
+        return;
+      }
+      response.status(200).send({text: "success"});
+  });
+});
+
+app.get('/api/admin/getRequestEvent', verifyAdminToken, jsonParser,(request, response) => {
+      var query = `SELECT * FROM public."EventRequest" AS er
+      LEFT JOIN public."User" AS u on er.id_user = u.id;`;
+
+      pool.query(query, (err, res) => {
+          if(err){
+            console.log(err);
+            response.status(404);
+            return;
+          }
+          response.status(200).send(res.rows);
+      });
+});
+
+app.post('/api/user/addissueRequest', verifyToken, jsonParser, (request, response) => {
+  const id = response.locals.id;
+
+  var { type, description } = request.body;
+  
+  var query = `INSERT INTO public."IssueRequest"
+  (type, description, id_user) VALUES
+  ('${type}', '${description}', ${id});`;
 
   pool.query(query, (err, res)=>{
       if(err){
@@ -205,8 +236,23 @@ app.post('/api/user/addRequestEvent', verifyToken, jsonParser, (request, respons
       }
       response.status(200).send({text: "success"});
   });
-
 });
+
+app.get('/api/admin/getIssueRequest', verifyAdminToken, jsonParser, (request, response) => {
+  
+  var query = `SELECT * FROM public."IssueRequest" AS ir
+  LEFT JOIN public."User" AS u on ir.id_user = u.id;`;
+
+  pool.query(query, (err, res)=>{
+      if(err){
+        console.log(err);
+        response.status(404);
+        return;
+      }
+      response.status(200).send(res.rows);
+  });
+});
+
 
 function verifyToken(request, response, next) {
     const header = request.headers["authorization"];
