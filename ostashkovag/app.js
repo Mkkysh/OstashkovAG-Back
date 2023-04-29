@@ -260,6 +260,21 @@ app.post('/api/user/addissueRequest', verifyToken, jsonParser, (request, respons
   });
 });
 
+app.get('/api/getActualEvent', jsonParser,(request, response) =>{
+  var query = `SELECT * FROM public."Event"
+  WHERE DATE(NOW()) = datebegin;`;
+
+  pool.query(query, (err, res)=>{
+    if(err){
+      console.log(err);
+      response.status(404);
+      return;
+    }
+    response.status(200).send(res.rows);
+  });
+
+});
+
 app.get('/api/admin/getIssueRequest', verifyAdminToken, jsonParser, (request, response) => {
   
   var query = `SELECT * FROM public."IssueRequest" AS ir
@@ -344,7 +359,6 @@ function verifyAdminToken(request, response, next) {
       response.status(401).send({});
     }
   }
-
 
 function main() {
     try{
