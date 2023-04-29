@@ -227,6 +227,8 @@ app.post('/api/user/addRequestEvent', verifyToken, jsonParser, (request, respons
   });
 });
 
+
+
 app.get('/api/admin/getRequestEvent', verifyAdminToken, jsonParser,(request, response) => {
       var query = `SELECT * FROM public."EventRequest" AS er
       LEFT JOIN public."User" AS u on er.id_user = u.id;`;
@@ -303,6 +305,56 @@ app.get('/api/getNews', jsonParser, (request, response) => {
     });
 });
 
+app.post('/api/admin/addEvent', upload.fields([{name: "pic", maxCount:10}]), verifyAdminToken, jsonParser, async (request, response)=>{
+  var data = JSON.parse(request.body.data);
+
+  var { name, description, datebegin, datefinal, address, type } = data;
+
+  var query = `INSERT INTO public."Event" 
+  (name, description, address, datebegin, datefinal, type, isarchive) VALUES
+  ('${name}', '${description}', '${address}', '${datebegin}', '${datefinal}', '${type}', false)
+  RETURNING id;`;
+
+  pool.query(query, (err, res)=>{
+    if(err){
+      console.log(err);
+      response.status(404);
+      return;
+    }
+   
+    var id_event = res.rows[0].id;
+
+    var query = `INSERT INTO public."MediaStorage"
+    (name) VALUES ('${request.files.pic[0].path}')
+    RETURNING id;`;
+
+    pool.query(query, (err, res)=>{
+        if(err){
+          console.log(err);
+          response.status(404);
+          return;
+        }
+        
+        id_media = res.rows[0].id;
+        var query = `INSERT INTO public."MediaStorageEvent"
+        (id_event, id_media, order_rows)
+        VALUES (${id_event}, ${id_media}, 1);`;
+
+        pool.query(query, (err,res)=>{
+          if(err){
+            console.log(err);
+            response.status(404);
+            return;
+          }
+
+          response.status(200).send({text: "success"});
+
+      });
+    });
+  });
+
+});
+
 
 function verifyToken(request, response, next) {
     const header = request.headers["authorization"];
@@ -337,15 +389,12 @@ function verifyAdminToken(request, response, next) {
     console.log("got " + header);
     if (typeof header !== undefined && header) {
       jwt.verify(header.split(" ")[1], "MIREAfan", function (err, decoded) {
-        console.log(decoded);
         if (err) {
           response.status(401).send({});
         } else if (decoded.exp <= Date.now()) {
             pool.query(
             `Select * from public."User" where email like '${decoded.login}'`,
             (err, results) => {
-              console.warn("test");
-              console.log(results.rows[0]);
               if (results.rows[0].email === decoded.login && results.rows[0].role === 'admin') {
                 response.locals.id = results.rows[0].id;
                 next();
