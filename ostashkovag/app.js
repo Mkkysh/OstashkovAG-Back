@@ -148,6 +148,21 @@ app.get('/api/user/getTracker', verifyToken, jsonParser, (request, response) => 
 
 });
 
+app.get('/api/user/getArchiveEvent', jsonParser, (request, response) => {
+  var query = `SELECT * FROM public."Event"
+  WHERE isarchive = true;`;
+
+  pool.query(query, (err, res)=>{
+      if(err){
+          console.log(err);
+          response.status(404);
+          return;
+      }
+      response.status(200).send(res.rows);
+  });
+});
+
+
 app.delete('/api/user/deleteTracker', verifyToken, jsonParser, (request, response) => {
     const id = response.locals.id;
 
@@ -164,6 +179,33 @@ app.delete('/api/user/deleteTracker', verifyToken, jsonParser, (request, respons
         }
         response.status(200).send({text: "success"});
     });
+});
+
+app.post('/api/user/addRequestEvent', verifyToken, jsonParser, (request, response) => {
+  const id = response.locals.id;
+
+  var { name, datebegin, datefinal, description, type } = request.body;
+  
+  var query = `INSERT INTO public."EventRequest"
+  (name, datebegin, datefinal, description, id_user, type) VALUES
+  ('${name}', `;
+
+  if(datebegin) query += `'${datebegin}', `; else query += `NULL, `;
+  if(datefinal) query += `'${datefinal}', `; else query += `NULL, `;
+
+  query += `'${description}', ${id}, '${type}');`;
+
+  console.log(query)
+
+  pool.query(query, (err, res)=>{
+      if(err){
+        console.log(err);
+        response.status(404);
+        return;
+      }
+      response.status(200).send({text: "success"});
+  });
+
 });
 
 function verifyToken(request, response, next) {
