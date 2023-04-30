@@ -43,6 +43,30 @@ const config = {
 const client = new pg.Client(config);
 const pool = new pg.Pool(config);
 
+function parseEventRowsByPhothos(events){
+  var result = [];
+
+  for(i in events){
+    if([...new Set(result.map(item => item.id))]
+    .includes(events[i].id))
+        continue;
+    result.push({...events[i], photoReport: []});
+  }
+
+  for(i in result){
+    for(j in events){
+      if(events[j].id === result[i].id){
+        if(events[j].order_rows === 1)
+          result[i].photo = events[j].photo;
+        else
+          result[i].photoReport.push(events[j].photo);
+        }
+      }
+    delete result[i].order_rows;
+  }
+  return result;
+}
+
 app.post('/api/getEvents', jsonParser, (request, response) => {
     var {page, sort} = request.body;
     page = !page ? 0 : page;
@@ -154,10 +178,16 @@ app.get('/api/user/getTracker', verifyToken, jsonParser, (request, response) => 
     const id = response.locals.id;
     
     var query = `SELECT ev.id, ev.name, ev.description,
-    ev.datebegin, ev.datefinal, ev.type FROM public."User" AS us
+    ev.datebegin, ev.datefinal, ev.type, ms.name AS photo,
+    mse.order_rows FROM public."User" AS us
     INNER JOIN public."EventUserTracking" AS eut ON
     us.id = eut.id_user INNER JOIN public."Event" AS ev 
-    ON eut.id_event = ev.id WHERE us.id = ${id};`;
+    ON eut.id_event = ev.id
+    INNER JOIN public."MediaStorageEvent" AS mse
+    ON mse.id_event = ev.id
+    INNER JOIN public."MediaStorage" AS ms
+    on ms.id = mse.id_media
+	  WHERE us.id = ${id};`;
 
     pool.query(query, (err, res)=>{
         if(err){
@@ -165,13 +195,22 @@ app.get('/api/user/getTracker', verifyToken, jsonParser, (request, response) => 
             response.status(404);
             return;
         }
-        response.status(200).send(res.rows);
+
+        var result = parseEventRowsByPhothos(res.rows)
+
+        response.status(200).send(result);
     });
 
 });
 
 app.get('/api/user/getArchiveEvent', jsonParser, (request, response) => {
-  var query = `SELECT * FROM public."Event"
+  var query = `SELECT ev.id, ev.name, ev.description, ev.address,
+  ev.datebegin, ev.datefinal, ev.type, ms.name AS photo 
+  FROM public."Event" AS ev
+  INNER JOIN public."MediaStorageEvent" AS mse
+  ON mse.id_event = ev.id 
+  INNER JOIN public."MediaStorage" AS ms
+  ON ms.id = mse.id_media
   WHERE isarchive = true;`;
 
   pool.query(query, (err, res)=>{
@@ -263,7 +302,13 @@ app.post('/api/user/addissueRequest', verifyToken, jsonParser, (request, respons
 });
 
 app.get('/api/getActualEvent', jsonParser,(request, response) =>{
-  var query = `SELECT * FROM public."Event"
+  var query = `SELECT ev.id, ev.name, ev.description, ev.address,
+  ev.datebegin, ev.datefinal, ev.type, ms.name 
+  AS photo FROM public."Event" AS ev
+  INNER JOIN public."MediaStorageEvent" AS mse
+  ON ev.id = mse.id_event
+  INNER JOIN public."MediaStorage" AS ms
+  ON ms.id = mse.id_media
   WHERE DATE(NOW()) = datebegin;`;
 
   pool.query(query, (err, res)=>{
@@ -354,7 +399,6 @@ app.post('/api/admin/addEvent', upload.fields([{name: "pic", maxCount:10}]), ver
   });
 
 });
-
 
 function verifyToken(request, response, next) {
     const header = request.headers["authorization"];
