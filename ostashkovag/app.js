@@ -59,7 +59,8 @@ function parseEventRowsByPhothos(events){
         if(events[j].order_rows === 1)
           result[i].photo = events[j].photo;
         else
-          result[i].photoReport.push(events[j].photo);
+          result[i].photoReport
+          .push(events[j].photo);
         }
       }
     delete result[i].order_rows;
@@ -68,20 +69,26 @@ function parseEventRowsByPhothos(events){
 }
 
 app.post('/api/getEvents', jsonParser, (request, response) => {
-    var {page, sort} = request.body;
+    var {page, sort, type, isarchive} = request.body;
     page = !page ? 0 : page;
-    sort = !sort ? "DESC" : sort;
-    const countEvents = 2;
+    const countEvents = 100;
     var countPage;
 
-    var query = `SELECT * From public."Event"
-                WHERE isarchive = false
-                ORDER BY datebegin ${sort}
-                LIMIT ${countEvents}
-                OFFSET ${countEvents*page};`;
+    var query = `SELECT e.id, e.name, e.description,
+    e.address, e.datebegin, e.datefinal, 
+    e.type, e.isarchive, ms.name AS photo
+    FROM public."Event" AS e
+    INNER JOIN public."MediaStorageEvent" AS mse
+    ON e.id = mse.id_event
+    INNER JOIN public."MediaStorage" AS ms
+    ON ms.id = mse.id_media
+    WHERE mse.order_rows = 1 ${type ? `AND e.type = '${type}'` : ""}
+    ${isarchive ? `AND e.isarchive = '${isarchive}'` : ""}
+    ORDER BY datebegin ${sort ? `${sort}` : `DESC`}
+    LIMIT ${countEvents}
+    OFFSET ${countEvents*page};`;
     
-    var queryCount = `SELECT * From public."Event"
-    WHERE isarchive = false;`;
+    var queryCount = `SELECT * From public."Event";`;
 
     pool.query(queryCount, (err, res)=>{
         if(err) {
@@ -116,8 +123,8 @@ app.post('/api/login' , jsonParser, (request, response) => {
     }
     if(res.rows &&
     res.rows[0] &&
-    res.rows[0]?.email == email,
-    res.rows[0]?.password == password) {
+    res.rows[0]?.email === email,
+    res.rows[0]?.password === password) {
         const code = jwt.sign(
             { login: email },
             "MIREAfan",
@@ -205,8 +212,8 @@ app.get('/api/user/getTracker', verifyToken, jsonParser, (request, response) => 
 
 app.get('/api/user/getArchiveEvent', jsonParser, (request, response) => {
   var query = `SELECT ev.id, ev.name, ev.description, ev.address,
-  ev.datebegin, ev.datefinal, ev.type, ms.name AS photo 
-  FROM public."Event" AS ev
+  ev.datebegin, ev.datefinal, ev.type, ms.name AS photo, 
+  mse.order_rows FROM public."Event" AS ev
   INNER JOIN public."MediaStorageEvent" AS mse
   ON mse.id_event = ev.id 
   INNER JOIN public."MediaStorage" AS ms
@@ -219,7 +226,8 @@ app.get('/api/user/getArchiveEvent', jsonParser, (request, response) => {
           response.status(404);
           return;
       }
-      response.status(200).send(res.rows);
+      var result = parseEventRowsByPhothos(res.rows)
+      response.status(200).send(result);
   });
 });
 
@@ -370,7 +378,7 @@ app.post('/api/admin/addEvent', upload.fields([{name: "pic", maxCount:10}]), ver
     var id_event = res.rows[0].id;
 
     var query = `INSERT INTO public."MediaStorage"
-    (name) VALUES ('${request.files.pic[0].path}')
+    (name) VALUES ('${request.files.pic[0].filename}')
     RETURNING id;`;
 
     pool.query(query, (err, res)=>{
