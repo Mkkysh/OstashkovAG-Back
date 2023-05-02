@@ -58,7 +58,7 @@ function parseEventRowsByPhothos(events){
       if(events[j].id === result[i].id){
         if(events[j].order_rows === 1)
           result[i].photo = events[j].photo;
-        else
+        else if(events[j].order_rows !== 2)
           result[i].photoReport
           .push(events[j].photo);
         }
@@ -68,7 +68,7 @@ function parseEventRowsByPhothos(events){
   return result;
 }
 
-app.post('/api/getEvents', jsonParser, (request, response) => {
+app.post('/api/event/page', jsonParser, (request, response) => {
     var {page, sort, type, isarchive} = request.body;
     page = !page ? 0 : page;
     const countEvents = 100;
@@ -162,7 +162,7 @@ app.post('/api/signup' , jsonParser, (request, response) => {
 
 });
 
-app.post('/api/user/addTracker', verifyToken, jsonParser, (request, response) => {
+app.post('/api/user/tracker/add', verifyToken, jsonParser, (request, response) => {
     const id = response.locals.id;
     var { event_id } = request.body;
 
@@ -181,7 +181,7 @@ app.post('/api/user/addTracker', verifyToken, jsonParser, (request, response) =>
 
 });
 
-app.get('/api/user/getTracker', verifyToken, jsonParser, (request, response) => {
+app.get('/api/user/tracker/get', verifyToken, jsonParser, (request, response) => {
     const id = response.locals.id;
     
     var query = `SELECT ev.id, ev.name, ev.description,
@@ -210,15 +210,16 @@ app.get('/api/user/getTracker', verifyToken, jsonParser, (request, response) => 
 
 });
 
-app.get('/api/user/getArchiveEvent', jsonParser, (request, response) => {
+app.get('/api/user/event/archive', jsonParser, (request, response) => {
+
   var query = `SELECT ev.id, ev.name, ev.description, ev.address,
-  ev.datebegin, ev.datefinal, ev.type, ms.name AS photo, 
-  mse.order_rows FROM public."Event" AS ev
+  ev.datebegin, ev.datefinal, ev.type, ms.name AS photo
+  FROM public."Event" AS ev
   INNER JOIN public."MediaStorageEvent" AS mse
   ON mse.id_event = ev.id 
   INNER JOIN public."MediaStorage" AS ms
   ON ms.id = mse.id_media
-  WHERE isarchive = true;`;
+  WHERE isarchive = true AND mse.order_rows = 1;`;
 
   pool.query(query, (err, res)=>{
       if(err){
@@ -226,13 +227,13 @@ app.get('/api/user/getArchiveEvent', jsonParser, (request, response) => {
           response.status(404);
           return;
       }
-      var result = parseEventRowsByPhothos(res.rows)
-      response.status(200).send(result);
+
+      response.status(200).send(res.rows);
   });
 });
 
 
-app.delete('/api/user/deleteTracker', verifyToken, jsonParser, (request, response) => {
+app.delete('/api/user/tracker/delete', verifyToken, jsonParser, (request, response) => {
     const id = response.locals.id;
 
     var { event_id } = request.body;
@@ -250,7 +251,7 @@ app.delete('/api/user/deleteTracker', verifyToken, jsonParser, (request, respons
     });
 });
 
-app.post('/api/user/addRequestEvent', verifyToken, jsonParser, (request, response) => {
+app.post('/api/user/event/request/add', verifyToken, jsonParser, (request, response) => {
   const id = response.locals.id;
 
   var { name, datebegin, datefinal, description, type } = request.body;
@@ -276,7 +277,7 @@ app.post('/api/user/addRequestEvent', verifyToken, jsonParser, (request, respons
 
 
 
-app.get('/api/admin/getRequestEvent', verifyAdminToken, jsonParser,(request, response) => {
+app.get('/api/admin/event/request/get', verifyAdminToken, jsonParser,(request, response) => {
       var query = `SELECT * FROM public."EventRequest" AS er
       LEFT JOIN public."User" AS u on er.id_user = u.id;`;
 
@@ -290,7 +291,7 @@ app.get('/api/admin/getRequestEvent', verifyAdminToken, jsonParser,(request, res
       });
 });
 
-app.post('/api/user/addissueRequest', verifyToken, jsonParser, (request, response) => {
+app.post('/api/user/issue/add', verifyToken, jsonParser, (request, response) => {
   const id = response.locals.id;
 
   var { type, description } = request.body;
@@ -309,7 +310,10 @@ app.post('/api/user/addissueRequest', verifyToken, jsonParser, (request, respons
   });
 });
 
-app.get('/api/getActualEvent', jsonParser,(request, response) =>{
+app.get('/api/event/date', jsonParser,(request, response) =>{
+
+  var {date} = request.body;
+
   var query = `SELECT ev.id, ev.name, ev.description, ev.address,
   ev.datebegin, ev.datefinal, ev.type, ms.name 
   AS photo FROM public."Event" AS ev
@@ -317,7 +321,8 @@ app.get('/api/getActualEvent', jsonParser,(request, response) =>{
   ON ev.id = mse.id_event
   INNER JOIN public."MediaStorage" AS ms
   ON ms.id = mse.id_media
-  WHERE DATE(NOW()) = datebegin;`;
+  WHERE DATE(${date ? `'${date}'` : `NOW()`}) = DATE(ev.datebegin)
+  AND mse.order_rows = 1;`;
 
   pool.query(query, (err, res)=>{
     if(err){
@@ -330,7 +335,7 @@ app.get('/api/getActualEvent', jsonParser,(request, response) =>{
 
 });
 
-app.get('/api/admin/getIssueRequest', verifyAdminToken, jsonParser, (request, response) => {
+app.get('/api/admin/issue/get', verifyAdminToken, jsonParser, (request, response) => {
   
   var query = `SELECT * FROM public."IssueRequest" AS ir
   LEFT JOIN public."User" AS u on ir.id_user = u.id;`;
@@ -345,7 +350,7 @@ app.get('/api/admin/getIssueRequest', verifyAdminToken, jsonParser, (request, re
   });
 });
 
-app.get('/api/getNews', jsonParser, (request, response) => {
+app.get('/api/new/get', jsonParser, (request, response) => {
     const query = `SELECT * FROM public."News"
     ORDER BY date DESC;`;
 
@@ -359,7 +364,7 @@ app.get('/api/getNews', jsonParser, (request, response) => {
     });
 });
 
-app.post('/api/admin/addNews', jsonParser, (request, response) => {
+app.post('/api/admin/new/add', jsonParser, (request, response) => {
   var { title, text, type } = request.body;
   
   var query = `INSERT INTO public."News"
@@ -376,7 +381,7 @@ app.post('/api/admin/addNews', jsonParser, (request, response) => {
   })
 });
 
-app.post('/api/admin/addEvent', upload.fields([{name: "pic", maxCount:10}]), jsonParser, async (request, response)=>{
+app.post('/api/admin/event/add', upload.fields([{name: "pic", maxCount:10}]), jsonParser, async (request, response)=>{
   var data = JSON.parse(request.body.data);
 
   var { name, description, datebegin, datefinal, address, type } = data;
@@ -447,6 +452,24 @@ app.get('/api/event/:id', jsonParser, (request, response) => {
     var result = parseEventRowsByPhothos(res.rows)
 
     response.status(200).send(result);
+  })
+
+});
+
+app.post('/api/event/find', jsonParser, (request, response) => {
+
+  var {text} = request.body;
+
+  var query = `SELECT id, name FROM public."Event"
+  WHERE REPLACE(lower(name), ' ', '') LIKE '%${text.toLowerCase().replaceAll(' ', '')}%';`;
+
+  pool.query(query, (err, res)=>{
+    if(err){
+      console.log(err);
+      response.status(404);
+      return;
+    }
+    response.status(200).send(res.rows);
   })
 
 });
