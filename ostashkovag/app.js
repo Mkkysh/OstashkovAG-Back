@@ -147,7 +147,7 @@ app.post('/api/signup' , jsonParser, (request, response) => {
     pool.query(query, (err, res) =>{
         if(err && err.code === '23505'){
             console.log(err);
-            response.status(404).send({text: "email or phone already exist"});
+            response.status(404).send({isExist: true});
             return;
         }
         else if(err){
@@ -156,7 +156,7 @@ app.post('/api/signup' , jsonParser, (request, response) => {
             return;
         }
         else {
-            response.status(200).send({text: "success"})
+            response.status(200).send({text: "success", isExist: false})
         }
     });
 
@@ -346,7 +346,8 @@ app.get('/api/admin/getIssueRequest', verifyAdminToken, jsonParser, (request, re
 });
 
 app.get('/api/getNews', jsonParser, (request, response) => {
-    const query = `SELECT * FROM public."News";`;
+    const query = `SELECT * FROM public."News"
+    ORDER BY date DESC;`;
 
     pool.query(query, (err, res) => {
         if(err){
@@ -358,7 +359,24 @@ app.get('/api/getNews', jsonParser, (request, response) => {
     });
 });
 
-app.post('/api/admin/addEvent', upload.fields([{name: "pic", maxCount:10}]), verifyAdminToken, jsonParser, async (request, response)=>{
+app.post('/api/admin/addNews', jsonParser, (request, response) => {
+  var { title, text, type } = request.body;
+  
+  var query = `INSERT INTO public."News"
+  (title, date, text, type) VALUES
+  ('${title}', DATE(NOW()), '${text}', '${type}');`;
+
+  pool.query(query, (err, res)=>{
+    if(err){
+      console.log(err);
+      response.status(404);
+      return;
+    }
+    response.status(200).send({text: "success"});
+  })
+});
+
+app.post('/api/admin/addEvent', upload.fields([{name: "pic", maxCount:10}]), jsonParser, async (request, response)=>{
   var data = JSON.parse(request.body.data);
 
   var { name, description, datebegin, datefinal, address, type } = data;
