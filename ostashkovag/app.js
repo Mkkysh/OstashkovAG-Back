@@ -50,19 +50,36 @@ function parseEventRowsByPhothos(events){
     if([...new Set(result.map(item => item.id))]
     .includes(events[i].id))
         continue;
-    result.push({...events[i], photoReport: []});
+    result.push({...events[i], photoReport: [], comments: []});
   }
 
   for(i in result){
     for(j in events){
+
       if(events[j].id === result[i].id){
-        if(events[j].order_rows === 1)
+        if(events[j].order_rows === 1 && 
+          !result[i].photo.includes(events[j].photo))
           result[i].photo = events[j].photo;
-        else if(events[j].order_rows !== 2)
+        else if(result[i].order_rows !== 2 && 
+          !result[i].photo.includes(events[j].photo))
           result[i].photoReport
           .push(events[j].photo);
         }
+
+        if(!result[i].comments.some(el => {
+          return el.name === events[j].username
+        }))
+        result[i].comments
+        .push({
+          name: events[j].username, 
+          comment: events[j].feedback,
+          date: events[j].date
+        });
       }
+
+    delete result[i].feedback;
+    delete result[i].date;
+    delete result[i].username;
     delete result[i].order_rows;
   }
   return result;
@@ -435,12 +452,18 @@ app.get('/api/event/:id', jsonParser, (request, response) => {
 
   var query = `SELECT ev.id, ev.name, ev.description,
   ev.datebegin, ev.datefinal, ev.type, ms.name AS photo,
-  mse.order_rows FROM public."Event" AS ev
+  mse.order_rows, u.name AS username, eua.feedback, eua.date 
+  AS comm_date FROM public."Event" AS ev
   INNER JOIN public."MediaStorageEvent" AS mse
   ON mse.id_event = ev.id
   INNER JOIN public."MediaStorage" AS ms
   ON ms.id = mse.id_media
-  WHERE ev.id = ${id}`;
+  INNER JOIN public."EventUserArchive" AS eua
+  ON ev.id = eua.id_event
+  INNER JOIN public."User" AS u
+  ON u.id = eua.id_user
+  WHERE ev.id = ${id}
+  ORDER BY comm_date DESC;`;
 
   pool.query(query, (err, res)=>{
     if(err){
@@ -448,6 +471,8 @@ app.get('/api/event/:id', jsonParser, (request, response) => {
       response.status(404);
       return;
     }
+
+    console.log(res.rows);
 
     var result = parseEventRowsByPhothos(res.rows)
 
@@ -471,6 +496,26 @@ app.post('/api/event/find', jsonParser, (request, response) => {
     }
     response.status(200).send(res.rows);
   })
+});
+
+app.post('/api/user/event/:id/review', verifyToken,jsonParser, (request, response) => {
+
+  var {text} = request.body;
+  const id = request.params.id;
+  const id_user = response.locals.id;
+
+  var query = `INSERT INTO public."EventUserArchive"
+  (id_event, id_user, feedback, date) VALUES (${id}, 
+  ${id_user}, '${text}', NOW());`;
+
+  pool.query(query, (err, res)=>{
+    if(err){
+      console.log(err);
+      response.status(404);
+      return;
+    }
+    response.status(200).send({text: "success"});
+  });
 
 });
 
