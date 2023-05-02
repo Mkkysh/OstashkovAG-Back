@@ -423,6 +423,31 @@ app.post('/api/admin/addEvent', upload.fields([{name: "pic", maxCount:10}]), jso
       });
     });
   });
+});
+
+app.get('/api/event/:id', jsonParser, (request, response) => {
+  const id = request.params.id;
+
+  var query = `SELECT ev.id, ev.name, ev.description,
+  ev.datebegin, ev.datefinal, ev.type, ms.name AS photo,
+  mse.order_rows FROM public."Event" AS ev
+  INNER JOIN public."MediaStorageEvent" AS mse
+  ON mse.id_event = ev.id
+  INNER JOIN public."MediaStorage" AS ms
+  ON ms.id = mse.id_media
+  WHERE ev.id = ${id}`;
+
+  pool.query(query, (err, res)=>{
+    if(err){
+      console.log(err);
+      response.status(404);
+      return;
+    }
+
+    var result = parseEventRowsByPhothos(res.rows)
+
+    response.status(200).send(result);
+  })
 
 });
 
