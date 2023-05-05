@@ -179,7 +179,7 @@ app.post('/api/signup' , jsonParser, (request, response) => {
 
 });
 
-app.post('/api/user/tracker/add', verifyToken, jsonParser, (request, response) => {
+app.post('/api/user/event/tracker/add', verifyToken, jsonParser, (request, response) => {
     const id = response.locals.id;
     var { event_id } = request.body;
 
@@ -198,7 +198,7 @@ app.post('/api/user/tracker/add', verifyToken, jsonParser, (request, response) =
 
 });
 
-app.get('/api/user/tracker/get', verifyToken, jsonParser, (request, response) => {
+app.get('/api/user/event/tracker', verifyToken, jsonParser, (request, response) => {
     const id = response.locals.id;
     
     var query = `SELECT ev.id, ev.name, ev.description,
@@ -236,7 +236,31 @@ app.get('/api/user/event/archive', jsonParser, (request, response) => {
   ON mse.id_event = ev.id 
   INNER JOIN public."MediaStorage" AS ms
   ON ms.id = mse.id_media
-  WHERE isarchive = true AND mse.order_rows = 1;`;
+  WHERE isarchive = true AND mse.order_rows = 1
+  ORDER BY datebegin DESC;`;
+
+  pool.query(query, (err, res)=>{
+      if(err){
+          console.log(err);
+          response.status(404);
+          return;
+      }
+
+      response.status(200).send(res.rows);
+  });
+});
+
+app.get('/api/user/event/plan', jsonParser, (request, response) => {
+
+  var query = `SELECT ev.id, ev.name, ev.description, ev.address,
+  ev.datebegin, ev.datefinal, ev.type, ms.name AS photo
+  FROM public."Event" AS ev
+  INNER JOIN public."MediaStorageEvent" AS mse
+  ON mse.id_event = ev.id 
+  INNER JOIN public."MediaStorage" AS ms
+  ON ms.id = mse.id_media
+  WHERE isarchive = false AND mse.order_rows = 1
+  ORDER BY datebegin ASC;`;
 
   pool.query(query, (err, res)=>{
       if(err){
@@ -250,7 +274,8 @@ app.get('/api/user/event/archive', jsonParser, (request, response) => {
 });
 
 
-app.delete('/api/user/tracker/delete', verifyToken, jsonParser, (request, response) => {
+
+app.delete('/api/user/event/tracker/delete', verifyToken, jsonParser, (request, response) => {
     const id = response.locals.id;
 
     var { event_id } = request.body;
@@ -398,7 +423,8 @@ app.post('/api/admin/new/add', jsonParser, (request, response) => {
   })
 });
 
-app.post('/api/admin/event/add', upload.fields([{name: "pic", maxCount:10}]), jsonParser, async (request, response)=>{
+app.post('/api/admin/event/add', upload
+        .fields([{name: "pic", maxCount:10}]), jsonParser, async (request, response)=>{
   var data = JSON.parse(request.body.data);
 
   var { name, description, datebegin, datefinal, address, type } = data;
@@ -445,6 +471,70 @@ app.post('/api/admin/event/add', upload.fields([{name: "pic", maxCount:10}]), js
       });
     });
   });
+});
+
+app.put('/api/admin/event/:id/finish', upload
+  .fields([{name: "pic", maxCount:20}]) ,
+  jsonParser,(request, response) => {
+    const id = request.params.id;
+
+    var  files = request.files.pic
+
+    var query = `INSERT INTO public."MediaStorage"
+    (name) VALUES `;
+
+    files.forEach((element, index) => {
+      query += `('${element.filename}'),`;
+      if(index === files.length - 1)
+        query = query.slice(0, -1);
+    });
+
+    query += ` RETURNING id;`;
+
+    pool.query(query, (err, res)=>{
+      if(err){
+        console.log(err);
+        response.status(404);
+        return;
+      }
+
+      var result = res.rows;
+
+      var query = `INSERT INTO public."MediaStorageEvent"
+      (id_event, id_media, order_rows)
+      VALUES  `;
+
+      result.forEach((element, index) => {
+        query += `(${id}, ${element.id}, 3),`;
+        if(index === result.length - 1)
+          query = query.slice(0, -1);
+      })
+
+      pool.query(query, (err, res)=>{
+        
+        if(err){
+          console.log(err);
+          response.status(404);
+          return;
+        }
+
+        var query = `UPDATE public."Event"
+        SET isarchive = true
+        WHERE id = ${id};`;
+
+        pool.query(query, (err, res)=>{
+          
+          if(err){
+            console.log(err);
+            response.status(404);
+            return;
+          }
+
+          response.status(200).send({text: "success"});
+
+        });
+      });
+    });
 });
 
 app.get('/api/event/:id', jsonParser, (request, response) => {
