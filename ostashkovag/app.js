@@ -548,9 +548,9 @@ app.get('/api/event/:id', jsonParser, (request, response) => {
   ON mse.id_event = ev.id
   INNER JOIN public."MediaStorage" AS ms
   ON ms.id = mse.id_media
-  INNER JOIN public."EventUserArchive" AS eua
+  LEFT JOIN public."EventUserArchive" AS eua
   ON ev.id = eua.id_event
-  INNER JOIN public."User" AS u
+  LEFT JOIN public."User" AS u
   ON u.id = eua.id_user
   WHERE ev.id = ${id}
   ORDER BY comm_date DESC;`;
