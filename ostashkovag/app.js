@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const cors = require("cors");
 const pg = require('pg');
+const fs = require("fs");
 
 const jsonParser = express.json();
 const PORT = 3000;
@@ -473,7 +474,7 @@ app.post('/api/admin/event/add', upload
   });
 });
 
-app.put('/api/admin/event/:id/finish', upload
+app.put('/api/admin/event/:id/addPhotoRecord', upload
   .fields([{name: "pic", maxCount:20}]) ,
   jsonParser,(request, response) => {
     const id = request.params.id;
@@ -518,12 +519,49 @@ app.put('/api/admin/event/:id/finish', upload
           return;
         }
 
-        var query = `UPDATE public."Event"
-        SET isarchive = true
-        WHERE id = ${id};`;
+        response.status(200).send({text: "success"});
+      });
+    });
+});
 
-        pool.query(query, (err, res)=>{
-          
+app.delete('/api/admin/event/:id/delete',
+jsonParser, async (request, response) => {
+  const id_event = request.params.id;
+
+  var { photo } = request.body;
+
+  var query = `SELECT id FROM public."MediaStorage" 
+  WHERE name = '${photo}';`;
+
+  pool.query(query, (err, res)=>{
+    if(err){
+      console.log(err);
+      response.status(404);
+      return;
+    }
+    var id_media = res.rows[0].id;
+
+    const query  = `DELETE FROM public."MediaStorageEvent"
+    WHERE id_event = ${id_event} AND id_media = ${id_media};`;
+
+    pool.query(query, (err, res)=>{
+      if(err){
+        console.log(err);
+        response.status(404);
+        return;
+      }
+
+      var query = `DELETE FROM public."MediaStorage"
+      WHERE id = ${id_media};`;
+
+      pool.query(query, (err, res)=>{
+        if(err){
+          console.log(err);
+          response.status(404);
+          return;
+        }
+        
+        fs.unlink('uploads/' + photo, (err) => {
           if(err){
             console.log(err);
             response.status(404);
@@ -535,6 +573,7 @@ app.put('/api/admin/event/:id/finish', upload
         });
       });
     });
+  });
 });
 
 app.get('/api/event/:id', jsonParser, (request, response) => {
@@ -570,6 +609,8 @@ app.get('/api/event/:id', jsonParser, (request, response) => {
   })
 
 });
+
+
 
 app.post('/api/event/find', jsonParser, (request, response) => {
 
