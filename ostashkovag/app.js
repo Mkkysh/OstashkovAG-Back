@@ -4,10 +4,15 @@ const multer = require("multer");
 const cors = require("cors");
 const pg = require('pg');
 const fs = require("fs");
+const { isUndefined } = require("util");
 
 const jsonParser = express.json();
 const PORT = 3000;
 const app = express();
+
+String.prototype.replaceAt = function(index, replacement) {
+  return this.substring(0, index) + replacement + this.substring(index + replacement.length);
+}
 
 app.use(cors());
 
@@ -576,6 +581,91 @@ jsonParser, async (request, response) => {
   });
 });
 
+app.put('/api/event/:id/update', 
+  upload.fields([{name: "pic", maxCount:1}]),
+  async (request, response) => {
+  const id = request.params.id;
+
+  var photo = request.files?.pic
+
+  if (request.body?.data)
+    var data = JSON.parse(request.body?.data)
+  else data = {undefined: undefined}
+
+  var { name, description, address, datebegin, datefinal, 
+  type, isarchive } = data;
+
+  try {
+
+  if(name || description || address 
+    || datebegin || datefinal || type || isarchive!==undefined){  
+
+  var query = `UPDATE public."Event"
+  SET ${name ? `name = '${name}', ` : ``}
+  ${description ? `description = '${description}', ` : ``}
+  ${address ? `address = '${address}', ` : ``}
+  ${datebegin ? `datebegin = '${datebegin}', ` : ``}
+  ${datefinal ? `datefinal = '${datefinal}', ` : ``}
+  ${type ? `type = '${type}', ` : ``}
+  ${isarchive!==undefined ? `isarchive = ${isarchive}, ` : ``}`;
+
+  query = query.slice(0, query.lastIndexOf(`,`)) + `` 
+  + query.slice(query.lastIndexOf(`,`) + 1);
+
+  query += `WHERE id = ${id};`;
+
+  pool.query(query, (err,res) => {
+    if(err){
+      console.log(err);
+      console.log("error text");
+      response.status(404);
+      return;
+    }
+  });
+  }
+} catch (error) {
+  console.log(error);
+}
+finally {
+  try {
+  console.log("step1");
+  if(photo){
+    var query = `UPDATE public."MediaStorage" AS ms
+    SET name = '${photo[0].filename}'
+    FROM public."MediaStorageEvent" as mse
+    WHERE ms.id = mse.id_media AND 
+    mse.id_event = ${id} AND mse.order_rows = 1
+    RETURNING (
+       SELECT name FROM public."MediaStorage" AS ms
+       INNER JOIN public."MediaStorageEvent" AS mse
+       ON ms.id = mse.id_media
+       WHERE mse.id_event = ${id} AND mse.order_rows = 1
+    ) AS old_name;`;
+
+    pool.query(query, (err,res) =>{
+      if(err){
+        console.log(err);
+        console.log("photo");
+        response.status(404);
+        return;
+      }
+
+      fs.unlink('uploads/' + res.rows[0].old_name, (err) => {
+        if(err){
+          console.log(err);
+          response.status(404);
+          return;
+          }
+        });
+    });
+  }
+} catch (error) {console.log(error);} finally{
+  console.log("step2");
+  response.status(200).send({text: "success"});
+}
+} 
+});
+
 app.get('/api/event/:id', jsonParser, (request, response) => {
   const id = request.params.id;
 
@@ -603,10 +693,10 @@ app.get('/api/event/:id', jsonParser, (request, response) => {
 
     console.log(res.rows);
 
-    var result = parseEventRowsByPhothos(res.rows)
+    var result = parseEventRowsByPhothos(res.rows);
 
     response.status(200).send(result);
-  })
+  });
 
 });
 
