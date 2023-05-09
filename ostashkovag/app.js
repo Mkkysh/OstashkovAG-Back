@@ -666,6 +666,33 @@ finally {
 } 
 });
 
+app.put('/api/admin/new/:id/update', 
+jsonParser ,(request, response) => {
+    const id = request.params.id;
+
+    var { title, date, text, type } = request.body;
+
+    var query = `UPDATE public."News"
+    SET ${title ? `title = '${title}', ` : ``}
+    ${date ? `date = '${date}', ` : ``}
+    ${text ? `text = '${text}', ` : ``}
+    ${type ? `type = '${type}', ` : ``} `;
+
+    query = query.slice(0, query.lastIndexOf(`,`)) + ``
+    + query.slice(query.lastIndexOf(`,`) + 1);
+
+    query += `WHERE id = ${id};`;
+
+    pool.query(query, (err,res) => {
+      if(err){
+        console.log(err);
+        response.status(404);
+        return;
+      }
+      response.status(200).send({text: "success"});
+    })
+});
+
 app.get('/api/event/:id', jsonParser, (request, response) => {
   const id = request.params.id;
 
