@@ -14,7 +14,6 @@ const app = express();
 const eventRouter = require('./routes/eventRoute');
 
 app.use('/api/event', eventRouter);
-app.use('/api/event', eventRouter);
 
 app.use(cors());
 
@@ -639,25 +638,6 @@ app.get('/api/event/:id', jsonParser, (request, response) => {
     response.status(200).send(result);
   });
 
-});
-
-
-
-app.post('/api/event/find', jsonParser, (request, response) => {
-
-  var {text} = request.body;
-
-  var query = `SELECT id, name FROM public."Event"
-  WHERE REPLACE(lower(name), ' ', '') LIKE '%${text.toLowerCase().replaceAll(' ', '')}%';`;
-
-  pool.query(query, (err, res)=>{
-    if(err){
-      console.log(err);
-      response.status(404);
-      return;
-    }
-    response.status(200).send(res.rows);
-  })
 });
 
 app.post('/api/user/event/:id/review', verifyToken,jsonParser, (request, response) => {

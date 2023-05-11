@@ -1,6 +1,7 @@
 const Event = require('../models/event');
 const MediaStorage = require('../models/mediaStorage');
 const MediaStorageEvent = require('../models/mediaStorageEvent');
+const { Op } = require('sequelize');
 
 exports.getFutureEvent = async (request, response)=>{
     try {
@@ -59,6 +60,37 @@ exports.getPastEvent = async (request, response)=>{
 
         response.status(200).json({events: rows, 
             countPages: countPages});
+      } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.findEvent = async (request, response)=>{
+    var { text } = request.body
+
+    text = text.split(' ').map(el => {return {
+            name: {
+                [Op.iLike]: '%' + el + '%'
+            }
+        };
+    });
+
+
+    try {
+        const event = await Event.findAll({
+            where:{
+                [Op.and]:text
+            },
+            include: [{
+                model: MediaStorage,
+                through: { 
+                    attributes: ['order_rows']
+                 },
+                 attributes: ['name']
+            }]
+        });
+        response.status(200).json(event);
       } catch (err) {
         console.error(err);
         response.status(500).json({ message: 'Ошибка сервера' });

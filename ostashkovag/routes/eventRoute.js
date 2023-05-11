@@ -7,4 +7,6 @@ router.get('/future', eventController.getFutureEvent);
 
 router.get('/past', jsonParser, eventController.getPastEvent);
 
+router.post('/find', jsonParser, eventController.findEvent);
+
 module.exports = router;
