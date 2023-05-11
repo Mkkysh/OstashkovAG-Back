@@ -257,31 +257,6 @@ app.get('/api/user/event/archive', jsonParser, (request, response) => {
   });
 });
 
-app.get('/api/user/event/plan', jsonParser, (request, response) => {
-
-  var query = `SELECT ev.id, ev.name, ev.description, ev.address,
-  ev.datebegin, ev.datefinal, ev.type, ms.name AS photo
-  FROM public."Event" AS ev
-  INNER JOIN public."MediaStorageEvent" AS mse
-  ON mse.id_event = ev.id 
-  INNER JOIN public."MediaStorage" AS ms
-  ON ms.id = mse.id_media
-  WHERE isarchive = false AND mse.order_rows = 1
-  ORDER BY datebegin ASC;`;
-
-  pool.query(query, (err, res)=>{
-      if(err){
-          console.log(err);
-          response.status(404);
-          return;
-      }
-
-      response.status(200).send(res.rows);
-  });
-});
-
-
-
 app.delete('/api/user/event/tracker/delete', verifyToken, jsonParser, (request, response) => {
     const id = response.locals.id;
 
