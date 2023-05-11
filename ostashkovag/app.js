@@ -4,15 +4,16 @@ const multer = require("multer");
 const cors = require("cors");
 const pg = require('pg');
 const fs = require("fs");
-const { isUndefined } = require("util");
+
+
 
 const jsonParser = express.json();
 const PORT = 3000;
 const app = express();
 
-String.prototype.replaceAt = function(index, replacement) {
-  return this.substring(0, index) + replacement + this.substring(index + replacement.length);
-}
+const eventRouter = require('./routes/eventRoute');
+
+app.use('/api/event', eventRouter);
 
 app.use(cors());
 
