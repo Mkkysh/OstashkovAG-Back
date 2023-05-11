@@ -14,6 +14,7 @@ const app = express();
 const eventRouter = require('./routes/eventRoute');
 
 app.use('/api/event', eventRouter);
+app.use('/api/event', eventRouter);
 
 app.use(cors());
 
@@ -92,46 +93,6 @@ function parseEventRowsByPhothos(events){
   return result;
 }
 
-app.post('/api/event/page', jsonParser, (request, response) => {
-    var {page, sort, type, isarchive} = request.body;
-    page = !page ? 0 : page;
-    const countEvents = 100;
-    var countPage;
-
-    var query = `SELECT e.id, e.name, e.description,
-    e.address, e.datebegin, e.datefinal, 
-    e.type, e.isarchive, ms.name AS photo
-    FROM public."Event" AS e
-    INNER JOIN public."MediaStorageEvent" AS mse
-    ON e.id = mse.id_event
-    INNER JOIN public."MediaStorage" AS ms
-    ON ms.id = mse.id_media
-    WHERE mse.order_rows = 1 ${type ? `AND e.type = '${type}'` : ""}
-    ${isarchive ? `AND e.isarchive = '${isarchive}'` : ""}
-    ORDER BY datebegin ${sort ? `${sort}` : `DESC`}
-    LIMIT ${countEvents}
-    OFFSET ${countEvents*page};`;
-    
-    var queryCount = `SELECT * From public."Event";`;
-
-    pool.query(queryCount, (err, res)=>{
-        if(err) {
-                console.log(err);
-                response.status(404);
-                return;
-        }
-        countPage = Math.ceil(res.rowCount/countEvents);
-    })
-
-    pool.query(query, (err, res)=>{
-        if(err) {
-            console.log(err);
-            response.status(404);
-            return;
-        }
-        response.status(200).send({events: res.rows, countPage: countPage});
-    })
-});
 
 app.post('/api/login' , jsonParser, (request, response) => {
     var { email, password } = request.body;
@@ -232,29 +193,6 @@ app.get('/api/user/event/tracker', verifyToken, jsonParser, (request, response) 
         response.status(200).send(result);
     });
 
-});
-
-app.get('/api/user/event/archive', jsonParser, (request, response) => {
-
-  var query = `SELECT ev.id, ev.name, ev.description, ev.address,
-  ev.datebegin, ev.datefinal, ev.type, ms.name AS photo
-  FROM public."Event" AS ev
-  INNER JOIN public."MediaStorageEvent" AS mse
-  ON mse.id_event = ev.id 
-  INNER JOIN public."MediaStorage" AS ms
-  ON ms.id = mse.id_media
-  WHERE isarchive = true AND mse.order_rows = 1
-  ORDER BY datebegin DESC;`;
-
-  pool.query(query, (err, res)=>{
-      if(err){
-          console.log(err);
-          response.status(404);
-          return;
-      }
-
-      response.status(200).send(res.rows);
-  });
 });
 
 app.delete('/api/user/event/tracker/delete', verifyToken, jsonParser, (request, response) => {

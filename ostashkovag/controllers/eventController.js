@@ -57,8 +57,6 @@ exports.getPastEvent = async (request, response)=>{
 
         countPages = Math.ceil(count / countEvents);
 
-        console.log(count);
-
         response.status(200).json({events: rows, 
             countPages: countPages});
       } catch (err) {
