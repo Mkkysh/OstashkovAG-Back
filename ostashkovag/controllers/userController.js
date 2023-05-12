@@ -28,3 +28,14 @@ exports.addFeedback = async (request, response) => {
         response.status(500).json({ message: 'Ошибка сервера' });
       }
 }
+
+exports.getUsers = async (request, response) => {
+    try{
+        const users = await User.findAll();
+        response.status(200).json(users);
+    }
+    catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}

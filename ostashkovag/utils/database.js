@@ -1,9 +1,9 @@
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize('Ostashkov-AG', 'postgres', 'root', {
+const sequelize = new Sequelize('Ostashkov-ag', 
+    'postgres', 'root', {
     host: 'localhost',
-    dialect: 'postgres',
-    port: 5432
+    dialect: 'postgres'
   });
   
 module.exports = sequelize;

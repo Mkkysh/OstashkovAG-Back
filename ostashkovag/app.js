@@ -12,6 +12,7 @@ const PORT = 3000;
 const app = express();
 
 module.exports = verifyToken;
+app.use(cors());
 
 const eventRouter = require('./routes/eventRouter');
 const userRouter = require('./routes/userRouter');
@@ -20,41 +21,6 @@ const { log } = require("console");
 
 app.use('/api/event', eventRouter);
 app.use('/api/user', userRouter);
-
-app.use(cors());
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    file.originalname = Buffer.from(file.originalname, "latin1").toString(
-      "utf8"
-    );
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(
-      null,
-      file.originalname.split(".")[0] +
-        uniqueSuffix +
-        "." +
-        file.originalname.split(".")[1]
-    );
-  },
-});
-
-const upload = multer({ storage: storage });
-
-const config = {
-    host: 'localhost',
-    user: 'postgres',     
-    password: 'root',
-    database: 'Ostashkov-AG',
-    port: 5432,
-    ssl: false
-};
-
-const client = new pg.Client(config);
-const pool = new pg.Pool(config);
 
 function parseEventRowsByPhothos(events){
   var result = [];
@@ -348,105 +314,55 @@ app.post('/api/admin/new/add', jsonParser, (request, response) => {
   })
 });
 
-app.post('/api/admin/event/add', upload
-        .fields([{name: "pic", maxCount:10}]), jsonParser, async (request, response)=>{
-  var data = JSON.parse(request.body.data);
+// app.put('/api/admin/event/:id/addPhotoRecord', upload
+//   .fields([{name: "pic", maxCount:20}]) ,
+//   jsonParser,(request, response) => {
+//     const id = request.params.id;
 
-  var { name, description, datebegin, datefinal, address, type } = data;
+//     var  files = request.files.pic
 
-  var query = `INSERT INTO public."Event" 
-  (name, description, address, datebegin, datefinal, type, isarchive) VALUES
-  ('${name}', '${description}', '${address}', '${datebegin}', '${datefinal}', '${type}', false)
-  RETURNING id;`;
+//     var query = `INSERT INTO public."MediaStorage"
+//     (name) VALUES `;
 
-  pool.query(query, (err, res)=>{
-    if(err){
-      console.log(err);
-      response.status(404);
-      return;
-    }
-   
-    var id_event = res.rows[0].id;
+//     files.forEach((element, index) => {
+//       query += `('${element.filename}'),`;
+//       if(index === files.length - 1)
+//         query = query.slice(0, -1);
+//     });
 
-    var query = `INSERT INTO public."MediaStorage"
-    (name) VALUES ('${request.files.pic[0].filename}')
-    RETURNING id;`;
+//     query += ` RETURNING id;`;
 
-    pool.query(query, (err, res)=>{
-        if(err){
-          console.log(err);
-          response.status(404);
-          return;
-        }
+//     pool.query(query, (err, res)=>{
+//       if(err){
+//         console.log(err);
+//         response.status(404);
+//         return;
+//       }
+
+//       var result = res.rows;
+
+//       var query = `INSERT INTO public."MediaStorageEvent"
+//       (id_event, id_media, order_rows)
+//       VALUES  `;
+
+//       result.forEach((element, index) => {
+//         query += `(${id}, ${element.id}, 3),`;
+//         if(index === result.length - 1)
+//           query = query.slice(0, -1);
+//       })
+
+//       pool.query(query, (err, res)=>{
         
-        id_media = res.rows[0].id;
-        var query = `INSERT INTO public."MediaStorageEvent"
-        (id_event, id_media, order_rows)
-        VALUES (${id_event}, ${id_media}, 1);`;
+//         if(err){
+//           console.log(err);
+//           response.status(404);
+//           return;
+//         }
 
-        pool.query(query, (err,res)=>{
-          if(err){
-            console.log(err);
-            response.status(404);
-            return;
-          }
-
-          response.status(200).send({text: "success"});
-
-      });
-    });
-  });
-});
-
-app.put('/api/admin/event/:id/addPhotoRecord', upload
-  .fields([{name: "pic", maxCount:20}]) ,
-  jsonParser,(request, response) => {
-    const id = request.params.id;
-
-    var  files = request.files.pic
-
-    var query = `INSERT INTO public."MediaStorage"
-    (name) VALUES `;
-
-    files.forEach((element, index) => {
-      query += `('${element.filename}'),`;
-      if(index === files.length - 1)
-        query = query.slice(0, -1);
-    });
-
-    query += ` RETURNING id;`;
-
-    pool.query(query, (err, res)=>{
-      if(err){
-        console.log(err);
-        response.status(404);
-        return;
-      }
-
-      var result = res.rows;
-
-      var query = `INSERT INTO public."MediaStorageEvent"
-      (id_event, id_media, order_rows)
-      VALUES  `;
-
-      result.forEach((element, index) => {
-        query += `(${id}, ${element.id}, 3),`;
-        if(index === result.length - 1)
-          query = query.slice(0, -1);
-      })
-
-      pool.query(query, (err, res)=>{
-        
-        if(err){
-          console.log(err);
-          response.status(404);
-          return;
-        }
-
-        response.status(200).send({text: "success"});
-      });
-    });
-});
+//         response.status(200).send({text: "success"});
+//       });
+//     });
+// });
 
 app.delete('/api/admin/event/:id/delete',
 jsonParser, async (request, response) => {
@@ -500,90 +416,90 @@ jsonParser, async (request, response) => {
   });
 });
 
-app.put('/api/event/:id/update', 
-  upload.fields([{name: "pic", maxCount:1}]),
-  async (request, response) => {
-  const id = request.params.id;
+// app.put('/api/event/:id/update', 
+//   upload.fields([{name: "pic", maxCount:1}]),
+//   async (request, response) => {
+//   const id = request.params.id;
 
-  var photo = request.files?.pic
+//   var photo = request.files?.pic
 
-  if (request.body?.data)
-    var data = JSON.parse(request.body?.data)
-  else data = {undefined: undefined}
+//   if (request.body?.data)
+//     var data = JSON.parse(request.body?.data)
+//   else data = {undefined: undefined}
 
-  var { name, description, address, datebegin, datefinal, 
-  type, isarchive } = data;
+//   var { name, description, address, datebegin, datefinal, 
+//   type, isarchive } = data;
 
-  try {
+//   try {
 
-  if(name || description || address 
-    || datebegin || datefinal || type || isarchive!==undefined){  
+//   if(name || description || address 
+//     || datebegin || datefinal || type || isarchive!==undefined){  
 
-  var query = `UPDATE public."Event"
-  SET ${name ? `name = '${name}', ` : ``}
-  ${description ? `description = '${description}', ` : ``}
-  ${address ? `address = '${address}', ` : ``}
-  ${datebegin ? `datebegin = '${datebegin}', ` : ``}
-  ${datefinal ? `datefinal = '${datefinal}', ` : ``}
-  ${type ? `type = '${type}', ` : ``}
-  ${isarchive!==undefined ? `isarchive = ${isarchive}, ` : ``}`;
+//   var query = `UPDATE public."Event"
+//   SET ${name ? `name = '${name}', ` : ``}
+//   ${description ? `description = '${description}', ` : ``}
+//   ${address ? `address = '${address}', ` : ``}
+//   ${datebegin ? `datebegin = '${datebegin}', ` : ``}
+//   ${datefinal ? `datefinal = '${datefinal}', ` : ``}
+//   ${type ? `type = '${type}', ` : ``}
+//   ${isarchive!==undefined ? `isarchive = ${isarchive}, ` : ``}`;
 
-  query = query.slice(0, query.lastIndexOf(`,`)) + `` 
-  + query.slice(query.lastIndexOf(`,`) + 1);
+//   query = query.slice(0, query.lastIndexOf(`,`)) + `` 
+//   + query.slice(query.lastIndexOf(`,`) + 1);
 
-  query += `WHERE id = ${id};`;
+//   query += `WHERE id = ${id};`;
 
-  pool.query(query, (err,res) => {
-    if(err){
-      console.log(err);
-      console.log("error text");
-      response.status(404);
-      return;
-    }
-  });
-  }
-} catch (error) {
-  console.log(error);
-}
-finally {
-  try {
-  console.log("step1");
-  if(photo){
-    var query = `UPDATE public."MediaStorage" AS ms
-    SET name = '${photo[0].filename}'
-    FROM public."MediaStorageEvent" as mse
-    WHERE ms.id = mse.id_media AND 
-    mse.id_event = ${id} AND mse.order_rows = 1
-    RETURNING (
-       SELECT name FROM public."MediaStorage" AS ms
-       INNER JOIN public."MediaStorageEvent" AS mse
-       ON ms.id = mse.id_media
-       WHERE mse.id_event = ${id} AND mse.order_rows = 1
-    ) AS old_name;`;
+//   pool.query(query, (err,res) => {
+//     if(err){
+//       console.log(err);
+//       console.log("error text");
+//       response.status(404);
+//       return;
+//     }
+//   });
+//   }
+// } catch (error) {
+//   console.log(error);
+// }
+// finally {
+//   try {
+//   console.log("step1");
+//   if(photo){
+//     var query = `UPDATE public."MediaStorage" AS ms
+//     SET name = '${photo[0].filename}'
+//     FROM public."MediaStorageEvent" as mse
+//     WHERE ms.id = mse.id_media AND 
+//     mse.id_event = ${id} AND mse.order_rows = 1
+//     RETURNING (
+//        SELECT name FROM public."MediaStorage" AS ms
+//        INNER JOIN public."MediaStorageEvent" AS mse
+//        ON ms.id = mse.id_media
+//        WHERE mse.id_event = ${id} AND mse.order_rows = 1
+//     ) AS old_name;`;
 
-    pool.query(query, (err,res) =>{
-      if(err){
-        console.log(err);
-        console.log("photo");
-        response.status(404);
-        return;
-      }
+//     pool.query(query, (err,res) =>{
+//       if(err){
+//         console.log(err);
+//         console.log("photo");
+//         response.status(404);
+//         return;
+//       }
 
-      fs.unlink('uploads/' + res.rows[0].old_name, (err) => {
-        if(err){
-          console.log(err);
-          response.status(404);
-          return;
-          }
-        });
-    });
-  }
-} catch (error) {console.log(error);} finally{
-  console.log("step2");
-  response.status(200).send({text: "success"});
-}
-} 
-});
+//       fs.unlink('uploads/' + res.rows[0].old_name, (err) => {
+//         if(err){
+//           console.log(err);
+//           response.status(404);
+//           return;
+//           }
+//         });
+//     });
+//   }
+// } catch (error) {console.log(error);} finally{
+//   console.log("step2");
+//   response.status(200).send({text: "success"});
+// }
+// } 
+// });
 
 app.put('/api/admin/new/:id/update', 
 jsonParser ,(request, response) => {
@@ -699,20 +615,14 @@ function verifyAdminToken(request, response, next) {
     }
   }
 
-function main() {
-    try{
-        pool.connect();
-        app.listen(PORT);
-        console.log("Соединение c базой данных успешно");
-    }catch(err){
-        return console.log(err);
-    }
-}
-
 app.get("/api/public/*", (req, res, next) => {
   res.sendFile("uploads/" + req.path.substring(12).replace('%20', ' '), { root: __dirname });
 });
 
-main();
+
+app.listen(PORT);
+
+
+// main();
 
 

@@ -7,4 +7,6 @@ const verifyToken = require('../app.js');
 router.post('/:id/review', verifyToken,
     jsonParser, userController.addFeedback);
 
+router.get('/get', userController.getUsers);
+
 module.exports = router;

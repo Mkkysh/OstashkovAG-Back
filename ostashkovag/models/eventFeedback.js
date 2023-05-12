@@ -29,7 +29,6 @@ const EventUserArchive = sequelize.define('EventUserArchive', {
         }
     }
 }, {
-    freezeTableName: true,
     timestamps: false
 });
 

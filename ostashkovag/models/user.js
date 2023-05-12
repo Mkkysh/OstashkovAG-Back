@@ -26,7 +26,12 @@ const User = sequelize.define('User', {
     role: {
         type: DataTypes.STRING,
         allonNull: false
+    },
+    photo:{
+        type: DataTypes.STRING
     }
+},{
+    timestamps: false,
 });
 
 sequelize.sync();

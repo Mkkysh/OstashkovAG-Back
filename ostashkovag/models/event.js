@@ -5,7 +5,7 @@ const Event = sequelize.define('Event', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
-        primaryKey: true
+        primaryKey: true,
     },
     name: {
         type: DataTypes.STRING,
@@ -36,7 +36,6 @@ const Event = sequelize.define('Event', {
         allowNull: false
     }
 }, {
-    freezeTableName: true,
     timestamps: false,
 });
 

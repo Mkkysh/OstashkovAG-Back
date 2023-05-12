@@ -1,23 +1,17 @@
 const Event = require('../models/event');
-const MediaStorage = require('../models/mediaStorage');
-const MediaStorageEvent = require('../models/mediaStorageEvent');
+const EventPhoto = require('../models/EventPhoto');
 const { Op } = require('sequelize');
 
 exports.getFutureEvent = async (request, response)=>{
+    console.log('getFutureEvent');
     try {
         const events = await Event.findAll({
             where:{
                 isarchive: false,
             },
             include: [{
-                model: MediaStorage,
-                through: { 
-                    where: {
-                        order_rows: 1
-                    },
-                    attributes: ['order_rows']
-                 },
-                 attributes: ['name']
+                model: EventPhoto,
+                attributes: ['name']
             }]
         });
         response.status(200).json(events);
@@ -43,11 +37,8 @@ exports.getPastEvent = async (request, response)=>{
             where: conditions,
             distinct: true,
             include: [{
-                model: MediaStorage,
-                through: { 
-                    attributes: ['order_rows']
-                 },
-                 attributes: ['name']
+                model: EventPhoto,
+                attributes: ['name', 'is_archive'],
             }],
             limit: countEvents,
             offset: page * countEvents,
@@ -76,18 +67,14 @@ exports.findEvent = async (request, response)=>{
         };
     });
 
-
     try {
         const event = await Event.findAll({
             where:{
                 [Op.and]:text
             },
             include: [{
-                model: MediaStorage,
-                through: { 
-                    attributes: ['order_rows']
-                 },
-                 attributes: ['name']
+                model: EventPhoto,
+                attributes: ['name','is_archive']
             }]
         });
         response.status(200).json(event);
@@ -97,6 +84,41 @@ exports.findEvent = async (request, response)=>{
     }
 }
 
-exports.getEvent = async (request, response)=>{
-    const id = request.params.id;
+// exports.getEvent = async (request, response)=>{
+//     const id = request.params.id;
+// }
+
+exports.addEvent = async (request, response)=>{
+    var data = JSON.parse(request.body.data);
+    var photo = request.files.pic[0].filename;
+    var { name, description, 
+        datebegin, datefinal, address, type } = data;
+
+    try{
+        const newEvent = {
+            name: name,
+            description: description,
+            address: address,
+            datebegin: datebegin,
+            datefinal: datefinal,
+            type: type,
+            isarchive: false,
+        };
+
+        const event = await Event.create(newEvent);
+
+        const newPhoto = {
+            name: photo,
+            id_event: event.id,
+            is_archive: false
+        }
+
+        await EventPhoto.create(newPhoto);
+
+        response.status(200).json({message: 'Событие успешно добавлено'});
+
+    }catch{
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
 }
