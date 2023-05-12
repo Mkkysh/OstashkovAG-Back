@@ -11,9 +11,15 @@ const jsonParser = express.json();
 const PORT = 3000;
 const app = express();
 
-const eventRouter = require('./routes/eventRoute');
+module.exports = verifyToken;
+
+const eventRouter = require('./routes/eventRouter');
+const userRouter = require('./routes/userRouter');
+const { log } = require("console");
+
 
 app.use('/api/event', eventRouter);
+app.use('/api/user', userRouter);
 
 app.use(cors());
 
@@ -640,27 +646,6 @@ app.get('/api/event/:id', jsonParser, (request, response) => {
 
 });
 
-app.post('/api/user/event/:id/review', verifyToken,jsonParser, (request, response) => {
-
-  var {text} = request.body;
-  const id = request.params.id;
-  const id_user = response.locals.id;
-
-  var query = `INSERT INTO public."EventUserArchive"
-  (id_event, id_user, feedback, date) VALUES (${id}, 
-  ${id_user}, '${text}', NOW());`;
-
-  pool.query(query, (err, res)=>{
-    if(err){
-      console.log(err);
-      response.status(404);
-      return;
-    }
-    response.status(200).send({text: "success"});
-  });
-
-});
-
 function verifyToken(request, response, next) {
     const header = request.headers["authorization"];
     console.log("got " + header);
@@ -729,3 +714,5 @@ app.get("/api/public/*", (req, res, next) => {
 });
 
 main();
+
+

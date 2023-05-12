@@ -96,3 +96,7 @@ exports.findEvent = async (request, response)=>{
         response.status(500).json({ message: 'Ошибка сервера' });
     }
 }
+
+exports.getEvent = async (request, response)=>{
+    const id = request.params.id;
+}
