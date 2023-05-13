@@ -29,6 +29,9 @@ const User = sequelize.define('User', {
     },
     photo:{
         type: DataTypes.STRING
+    },
+    refreshToken: {
+        type: DataTypes.STRING
     }
 },{
     timestamps: false,

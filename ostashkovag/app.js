@@ -1,18 +1,19 @@
+require('dotenv').config();
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const cors = require("cors");
 const pg = require('pg');
 const fs = require("fs");
-
-
+const coockieParser = require("cookie-parser");
 
 const jsonParser = express.json();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const app = express();
 
 module.exports = verifyToken;
 app.use(cors());
+app.use(coockieParser());
 
 const eventRouter = require('./routes/eventRouter');
 const userRouter = require('./routes/userRouter');

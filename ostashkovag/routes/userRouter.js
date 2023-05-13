@@ -9,4 +9,6 @@ router.post('/:id/review', verifyToken,
 
 router.get('/get', userController.getUsers);
 
+router.post('/signup', jsonParser, userController.signup);
+
 module.exports = router;
