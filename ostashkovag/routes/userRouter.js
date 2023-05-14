@@ -11,4 +11,6 @@ router.get('/get', userController.getUsers);
 
 router.post('/signup', jsonParser, userController.signup);
 
+router.post('/login', jsonParser, userController.login);
+
 module.exports = router;

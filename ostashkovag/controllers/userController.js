@@ -89,3 +89,48 @@ exports.signup = async (request, response) => {
         response.status(500).json({ message: 'Ошибка сервера' });
     }
 }
+
+exports.login = async (request, response) => {
+    try {
+        const { email, password } = request.body;
+
+        const user = await User.findOne({
+            where: {
+                email: email
+            }
+        });
+
+        if (!user) {
+            response.status(404).json({ message: 'Пользователь не найден' });
+            return;
+        }
+
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+        if(!isPasswordCorrect){
+            response.status(404).json({ message: 'Невкправильный пароль' });
+            return;
+        }
+
+        const tokens = await auth.generateTokens({id: user.id,
+            email: user.email
+        });
+
+        user.refreshToken = tokens.refreshToken;
+        user.save();
+
+        response.cookie('refreshToken', tokens.refreshToken, {
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpyOnly: true
+        });
+
+        response.status(200).json({
+            message: 'Пользователь вошел',
+            tokens: tokens,
+            user: user
+        });
+
+    } catch (err) {
+        
+    }
+}
