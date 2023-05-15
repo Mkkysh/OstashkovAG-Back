@@ -212,7 +212,17 @@ exports.deleteEvent = async (request, response)=>{
         const event = await Event.findOne({
            where: {
                id: id
-           }
+           },
+           include: [{
+               model: EventPhoto,
+               attributes: ['name']
+           }] 
+        });
+
+        event.EventPhotos.forEach(element => {
+            fs.unlink('./uploads/' + element.name, (err) => {
+                if (err) return;
+            });
         });
 
         await event.destroy();
