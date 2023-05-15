@@ -14,4 +14,6 @@ router.post('/add', upload
     .fields([{name: "pic", maxCount:10}]), 
     eventController.addEvent);
 
+router.get('/:id', eventController.getEvent);
+
 module.exports = router;

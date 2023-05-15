@@ -84,10 +84,6 @@ exports.findEvent = async (request, response)=>{
     }
 }
 
-// exports.getEvent = async (request, response)=>{
-//     const id = request.params.id;
-// }
-
 exports.addEvent = async (request, response)=>{
     var data = JSON.parse(request.body.data);
     var photo = request.files.pic[0].filename;
@@ -118,6 +114,27 @@ exports.addEvent = async (request, response)=>{
         response.status(200).json({message: 'Событие успешно добавлено'});
 
     }catch{
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.getEvent = async (request, response)=>{
+    try {
+        const id = request.params.id;
+        const event = await Event.findOne({
+            where: {
+                id: id
+            },
+            include: [{
+                model: EventPhoto,
+                attributes: ['name','is_archive']
+            }]
+        });
+
+        response.status(200).json(event);
+
+    } catch (err) {
         console.error(err);
         response.status(500).json({ message: 'Ошибка сервера' });
     }
