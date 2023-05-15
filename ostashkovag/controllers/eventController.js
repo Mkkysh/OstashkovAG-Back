@@ -181,3 +181,26 @@ exports.updateEvent = async (request, response)=>{
         response.status(500).json({ message: 'Ошибка сервера' });
     }
 }
+
+exports.addPhotoRecord = async (request, response)=>{
+    try {
+        const id = request.params.id;
+        var files = request.files?.pic;
+
+        const insert = files.map(el => {
+            return {
+                name: el.filename,
+                id_event: id,
+                is_archive: true
+            } 
+        });
+
+        await EventPhoto.bulkCreate(insert);
+
+        response.status(200).json({message: 'Фото успешно добавлено'});
+
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}

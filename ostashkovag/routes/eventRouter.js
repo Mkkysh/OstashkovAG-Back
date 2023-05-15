@@ -20,4 +20,8 @@ router.put('/:id/update', upload
     .fields([{name: "pic", maxCount:1}]),
     eventController.updateEvent);
 
+router.post('/:id/addPhotoRecord', upload
+    .fields([{name: "pic", maxCount:10}]),
+    eventController.addPhotoRecord);
+
 module.exports = router;
