@@ -11,7 +11,7 @@ const jsonParser = express.json();
 const PORT = process.env.PORT || 3000;
 const app = express();
 
-module.exports = verifyToken;
+
 app.use(cors());
 app.use(coockieParser());
 
@@ -119,7 +119,7 @@ app.post('/api/signup' , jsonParser, (request, response) => {
 
 });
 
-app.post('/api/user/event/tracker/add', verifyToken, jsonParser, (request, response) => {
+app.post('/api/user/event/tracker/add', jsonParser, (request, response) => {
     const id = response.locals.id;
     var { event_id } = request.body;
 
@@ -138,7 +138,7 @@ app.post('/api/user/event/tracker/add', verifyToken, jsonParser, (request, respo
 
 });
 
-app.get('/api/user/event/tracker', verifyToken, jsonParser, (request, response) => {
+app.get('/api/user/event/tracker', jsonParser, (request, response) => {
     const id = response.locals.id;
     
     var query = `SELECT ev.id, ev.name, ev.description,
@@ -167,7 +167,7 @@ app.get('/api/user/event/tracker', verifyToken, jsonParser, (request, response) 
 
 });
 
-app.delete('/api/user/event/tracker/delete', verifyToken, jsonParser, (request, response) => {
+app.delete('/api/user/event/tracker/delete', jsonParser, (request, response) => {
     const id = response.locals.id;
 
     var { event_id } = request.body;
@@ -185,7 +185,7 @@ app.delete('/api/user/event/tracker/delete', verifyToken, jsonParser, (request, 
     });
 });
 
-app.post('/api/user/event/request/add', verifyToken, jsonParser, (request, response) => {
+app.post('/api/user/event/request/add', jsonParser, (request, response) => {
   const id = response.locals.id;
 
   var { name, datebegin, datefinal, description, type } = request.body;
@@ -211,7 +211,7 @@ app.post('/api/user/event/request/add', verifyToken, jsonParser, (request, respo
 
 
 
-app.get('/api/admin/event/request/get', verifyAdminToken, jsonParser,(request, response) => {
+app.get('/api/admin/event/request/get', jsonParser,(request, response) => {
       var query = `SELECT * FROM public."EventRequest" AS er
       LEFT JOIN public."User" AS u on er.id_user = u.id;`;
 
@@ -225,7 +225,7 @@ app.get('/api/admin/event/request/get', verifyAdminToken, jsonParser,(request, r
       });
 });
 
-app.post('/api/user/issue/add', verifyToken, jsonParser, (request, response) => {
+app.post('/api/user/issue/add', jsonParser, (request, response) => {
   const id = response.locals.id;
 
   var { type, description } = request.body;
@@ -269,7 +269,7 @@ app.get('/api/event/date', jsonParser,(request, response) =>{
 
 });
 
-app.get('/api/admin/issue/get', verifyAdminToken, jsonParser, (request, response) => {
+app.get('/api/admin/issue/get', jsonParser, (request, response) => {
   
   var query = `SELECT * FROM public."IssueRequest" AS ir
   LEFT JOIN public."User" AS u on ir.id_user = u.id;`;
@@ -562,59 +562,6 @@ app.get('/api/event/:id', jsonParser, (request, response) => {
   });
 
 });
-
-function verifyToken(request, response, next) {
-    const header = request.headers["authorization"];
-    console.log("got " + header);
-    if (typeof header !== undefined && header) {
-      jwt.verify(header.split(" ")[1], "MIREAfan", function (err, decoded) {
-        console.log(decoded);
-        if (err) {
-          response.status(401).send({});
-        } else if (decoded.exp <= Date.now()) {
-            pool.query(
-            `Select * from public."User" where email like '${decoded.login}'`,
-            (err, results) => {
-              console.warn("test");
-              console.log(results.rows[0]);
-              if (results.rows[0].email === decoded.login) {
-                response.locals.id = results.rows[0].id;
-                next();
-              }
-              else response.status(401).send({});
-            }
-          );
-        }
-      });
-    } else {
-      response.status(401).send({});
-    }
-  }
-
-function verifyAdminToken(request, response, next) {
-    const header = request.headers["authorization"];
-    console.log("got " + header);
-    if (typeof header !== undefined && header) {
-      jwt.verify(header.split(" ")[1], "MIREAfan", function (err, decoded) {
-        if (err) {
-          response.status(401).send({});
-        } else if (decoded.exp <= Date.now()) {
-            pool.query(
-            `Select * from public."User" where email like '${decoded.login}'`,
-            (err, results) => {
-              if (results.rows[0].email === decoded.login && results.rows[0].role === 'admin') {
-                response.locals.id = results.rows[0].id;
-                next();
-              }
-              else response.status(401).send({});
-            }
-          );
-        }
-      });
-    } else {
-      response.status(401).send({});
-    }
-  }
 
 app.get("/api/public/*", (req, res, next) => {
   res.sendFile("uploads/" + req.path.substring(12).replace('%20', ' '), { root: __dirname });
