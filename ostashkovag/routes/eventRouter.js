@@ -10,6 +10,8 @@ router.get('/past', jsonParser, eventController.getPastEvent);
 
 router.post('/find', jsonParser, eventController.findEvent);
 
+router.delete('/:id/delete', eventController.deleteEvent);
+
 router.post('/add', upload
     .fields([{name: "pic", maxCount:1}]), 
     eventController.addEvent);

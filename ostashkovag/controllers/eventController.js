@@ -204,3 +204,23 @@ exports.addPhotoRecord = async (request, response)=>{
         response.status(500).json({ message: 'Ошибка сервера' });
     }
 }
+
+exports.deleteEvent = async (request, response)=>{
+    try {
+        const id = request.params.id;
+
+        const event = await Event.findOne({
+           where: {
+               id: id
+           }
+        });
+
+        await event.destroy();
+
+        response.status(200).json({message: 'Событие успешно удалено'});
+
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
