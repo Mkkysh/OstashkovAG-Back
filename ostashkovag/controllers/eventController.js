@@ -1,6 +1,7 @@
 const Event = require('../models/event');
 const EventPhoto = require('../models/EventPhoto');
 const { Op } = require('sequelize');
+const fs = require('fs');
 
 exports.getFutureEvent = async (request, response)=>{
     console.log('getFutureEvent');
@@ -87,6 +88,7 @@ exports.findEvent = async (request, response)=>{
 exports.addEvent = async (request, response)=>{
     var data = JSON.parse(request.body.data);
     var photo = request.files.pic[0].filename;
+
     var { name, description, 
         datebegin, datefinal, address, type } = data;
 
@@ -113,7 +115,7 @@ exports.addEvent = async (request, response)=>{
 
         response.status(200).json({message: 'Событие успешно добавлено'});
 
-    }catch{
+    }catch(err){
         console.error(err);
         response.status(500).json({ message: 'Ошибка сервера' });
     }
@@ -133,6 +135,46 @@ exports.getEvent = async (request, response)=>{
         });
 
         response.status(200).json(event);
+
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.updateEvent = async (request, response)=>{
+    try {
+        const id = request.params.id;
+        const photo = request.files?.pic;
+
+        const data = request.body.data ? JSON.parse(request.body.data) : undefined;
+
+        if(data){
+            await Event.update(data,{
+                where: {
+                    id: id
+                }
+            });
+        }
+        
+        if(photo){
+            const eventPhoto = await EventPhoto.findOne({
+                where: {
+                    id_event: id,
+                    is_archive: false
+                }
+            });
+
+            const oldPhoto = eventPhoto.name;
+            eventPhoto.name = photo[0].filename;
+            eventPhoto.save();
+
+            fs.unlink('./uploads/' + oldPhoto, (err) => {
+                if (err) throw err;
+            });
+        }
+
+        response.status(200).json({message: 'Событие успешно обновлено'});
 
     } catch (err) {
         console.error(err);
