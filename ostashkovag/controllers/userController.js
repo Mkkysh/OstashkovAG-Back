@@ -66,7 +66,8 @@ exports.signup = async (request, response) => {
         });
 
         const tokens = await auth.generateTokens({id: user.id,
-            email: user.email
+            email: user.email,
+            role: user.role
         });
 
         user.refreshToken = tokens.refreshToken;
@@ -112,7 +113,8 @@ exports.login = async (request, response) => {
         }
 
         const tokens = auth.generateTokens({id: user.id,
-            email: user.email
+            email: user.email,
+            role: user.role
         });
 
         user.refreshToken = tokens.refreshToken;
@@ -184,7 +186,8 @@ exports.refresh = async (request, response) => {
         });
 
         const tokens = auth.generateTokens({id: user.id,
-            email: user.email
+            email: user.email,
+            role: user.role
         });
 
         user.refreshToken = tokens.refreshToken;

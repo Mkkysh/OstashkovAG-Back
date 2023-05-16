@@ -18,11 +18,13 @@ app.use(coockieParser());
 const eventRouter = require('./routes/eventRouter');
 const userRouter = require('./routes/userRouter');
 const newRouter = require('./routes/newRouter');
+const issueRouter = require('./routes/issueRouter');
 
 
 app.use('/api/new', newRouter);
 app.use('/api/event', eventRouter);
 app.use('/api/user', userRouter);
+app.use('/api/issue', issueRouter);
 
 app.post('/api/user/event/tracker/add', jsonParser, (request, response) => {
     const id = response.locals.id;
