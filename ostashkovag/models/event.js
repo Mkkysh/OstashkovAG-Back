@@ -39,8 +39,8 @@ const Event = sequelize.define('Event', {
     timestamps: false,
 });
 
-sequelize.sync();
+// sequelize.sync();
 
-Event.sync({alter: true});
+// Event.sync({alter: true});
 
 module.exports = Event;

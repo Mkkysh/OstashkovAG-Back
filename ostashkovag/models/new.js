@@ -27,8 +27,8 @@ const New = sequelize.define('New', {
     timestamps: false
 });
 
-sequelize.sync();
+// sequelize.sync();
 
-New.sync({alter: true});
+// New.sync({alter: true});
 
 module.exports = New;

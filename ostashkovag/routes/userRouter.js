@@ -17,4 +17,13 @@ router.put('/refresh', userController.refresh);
 
 router.delete('/logout', userController.logout);
 
+router.post('/tracking/:id', verifyToken, 
+userController.addTracking);
+
+router.delete('/tracking/:id', verifyToken,
+userController.deleteTracking);
+
+router.get('/tracking', verifyToken,
+userController.getTracking);
+
 module.exports = router;

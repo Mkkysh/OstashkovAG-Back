@@ -1,5 +1,4 @@
-const EventRequest = require('../models/eventRequest');
-const User = require('../models/user');
+const { User, EventRequest } = require('../models/index');
 
 exports.addEventRequest = async (request, response) => {
     try {

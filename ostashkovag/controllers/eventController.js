@@ -1,9 +1,8 @@
-const Event = require('../models/event');
-const EventPhoto = require('../models/eventPhoto');
-const { Op, col } = require('sequelize');
+const { Event, EventPhoto } = require('../models/index');
+const { Op } = require('sequelize');
 const Sequelize = require('sequelize');
 const fs = require('fs');
-const sequelize = require('../utils/database');
+
 
 exports.getFutureEvent = async (request, response)=>{
     console.log('getFutureEvent');

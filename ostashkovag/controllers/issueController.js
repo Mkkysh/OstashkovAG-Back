@@ -1,6 +1,4 @@
-const IssueRequest = require('../models/issueRequest');
-const User = require('../models/user');
-
+const { User, IssueRequest } = require('../models/index');
 
 exports.addIssueRequest = async (request, response) => {
     try {

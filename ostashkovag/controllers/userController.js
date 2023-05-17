@@ -1,9 +1,9 @@
-const User = require('../models/user');
-const Event = require('../models/event');
-const EventUserArchive = require('../models/eventFeedback');
 const Sequelize = require('sequelize');
 const bcrypt = require('bcrypt');
 const auth = require('../utils/auth');
+const { EventUserTracking, EventUserArchive, 
+    Event, User} = require('../models/index');
+const { raw } = require('express');
 
 exports.addFeedback = async (request, response) => {
     try {
@@ -203,6 +203,71 @@ exports.refresh = async (request, response) => {
             tokens: tokens,
             user: user
         });
+
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.addTracking = async (request, response) => {
+    try {
+        const id_event = request.params.id;
+        const id_user = request.user.id;
+        
+        await EventUserTracking.create({
+            id_event: id_event,
+            id_user: id_user
+        });
+
+        response.status(200).json({message: 'Трекинг добавлен'});
+
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.deleteTracking = async (request, response) => {
+    try {
+
+        const id_event = request.params.id;
+        const id_user = request.user.id;
+
+        await EventUserTracking.destroy({
+           where: {
+               id_event: id_event,
+               id_user: id_user
+           } 
+        });
+        
+        response.status(200).json({message: 'Трекинг удален'});
+
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.getTracking = async (request, response) => {
+    try {
+        
+        id_user = request.user.id;
+
+        const tracking = await Event.findAll({
+           include: [
+               {
+                model: User,
+                through: EventUserTracking,
+                where: {
+                    id: id_user
+                }
+            },
+           ]
+        });
+
+
+        response.status(200).json(tracking);
 
     } catch (err) {
         console.error(err);

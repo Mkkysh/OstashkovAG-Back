@@ -32,14 +32,14 @@ const EventUserArchive = sequelize.define('EventUserArchive', {
     timestamps: false
 });
 
-Event.belongsToMany(User, {through: EventUserArchive,
-    foreignKey: 'id_event'});
+// Event.belongsToMany(User, {through: EventUserArchive,
+//     foreignKey: 'id_event'});
 
-User.belongsToMany(Event, {through: EventUserArchive,
-    foreignKey: 'id_user'});
+// User.belongsToMany(Event, {through: EventUserArchive,
+//     foreignKey: 'id_user'});
 
-sequelize.sync();
+// sequelize.sync();
 
-EventUserArchive.sync({alter: true});
+// EventUserArchive.sync({alter: true});
 
 module.exports = EventUserArchive;

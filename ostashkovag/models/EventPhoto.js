@@ -23,14 +23,14 @@ const EventPhoto = sequelize.define('EventPhoto', {
     timestamps: false,
 });
 
-Event.hasMany(EventPhoto, 
-        {foreignKey: 'id_event',
-        onDelete: 'RESTRICT'});
+// Event.hasMany(EventPhoto, 
+//         {foreignKey: 'id_event',
+//         onDelete: 'RESTRICT'});
 
-EventPhoto.belongsTo(Event, {foreignKey: 'id_event'});
+// EventPhoto.belongsTo(Event, {foreignKey: 'id_event'});
 
-sequelize.sync();
+// sequelize.sync();
 
-EventPhoto.sync({alter: true});
+// EventPhoto.sync({alter: true});
 
 module.exports = EventPhoto;

@@ -1,6 +1,5 @@
-const New = require('../models/new');
 const Sequelize = require('sequelize');
-
+const { New } = require('../models/index');
 
 exports.addNew = async (request, response) => {
     try {

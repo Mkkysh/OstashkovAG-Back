@@ -32,11 +32,11 @@ const IssueRequest = sequelize.define('IssueRequest', {
     timestamps: false,
 });
 
-User.hasMany(IssueRequest, {foreignKey: 'id_user'});
-IssueRequest.belongsTo(User, {foreignKey: 'id_user'});
+// User.hasMany(IssueRequest, {foreignKey: 'id_user'});
+// IssueRequest.belongsTo(User, {foreignKey: 'id_user'});
 
-sequelize.sync();
+// sequelize.sync();
 
-IssueRequest.sync({alter: true});
+// IssueRequest.sync({alter: true});
 
 module.exports = IssueRequest;

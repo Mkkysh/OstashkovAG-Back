@@ -29,11 +29,11 @@ const EventRequest = sequelize.define('EventRequest', {
     timestamps: false,
 });
 
-User.hasMany(EventRequest, {foreignKey: 'id_user'});
-EventRequest.belongsTo(User, {foreignKey: 'id_user'});
+// User.hasMany(EventRequest, {foreignKey: 'id_user'});
+// EventRequest.belongsTo(User, {foreignKey: 'id_user'});
 
-sequelize.sync();
+// sequelize.sync();
 
-EventRequest.sync({alter: true});
+// EventRequest.sync({alter: true});
 
 module.exports = EventRequest;
