@@ -25,18 +25,26 @@ exports.getFutureEvent = async (request, response)=>{
 
 exports.getPastEvent = async (request, response)=>{
 
-    var {page, type} = request.query;
+    var {page, type, search} = request.query;
     page = !page ? 0 : page;
     const countEvents = 3;
 
-    conditions = {
+    filter = {
         isarchive: true,
     };
-    if (type) conditions.type = type;
+    if (type) filter.type = type;
+    if (search) search = search.split(' ').map(el => {return {
+        name: {
+            [Op.iLike]: '%' + el + '%'
+            }}
+        });
+    else search = [];
 
     try {
         const {count, rows} = await Event.findAndCountAll({
-            where: conditions,
+            where: {...filter,
+                [Op.and]:search
+            },
             distinct: true,
             include: [{
                 model: EventPhoto,
@@ -92,8 +100,7 @@ exports.findEvent = async (request, response)=>{
     text = text.split(' ').map(el => {return {
             name: {
                 [Op.iLike]: '%' + el + '%'
-            }
-        };
+        }}
     });
 
     try {
