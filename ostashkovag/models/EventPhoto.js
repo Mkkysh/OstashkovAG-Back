@@ -31,4 +31,6 @@ EventPhoto.belongsTo(Event, {foreignKey: 'id_event'});
 
 sequelize.sync();
 
+EventPhoto.sync({alter: true});
+
 module.exports = EventPhoto;

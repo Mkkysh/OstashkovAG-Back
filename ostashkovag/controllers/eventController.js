@@ -1,7 +1,9 @@
 const Event = require('../models/event');
-const EventPhoto = require('../models/EventPhoto');
-const { Op } = require('sequelize');
+const EventPhoto = require('../models/eventPhoto');
+const { Op, col } = require('sequelize');
+const Sequelize = require('sequelize');
 const fs = require('fs');
+const sequelize = require('../utils/database');
 
 exports.getFutureEvent = async (request, response)=>{
     console.log('getFutureEvent');
@@ -56,6 +58,33 @@ exports.getPastEvent = async (request, response)=>{
         console.error(err);
         response.status(500).json({ message: 'Ошибка сервера' });
     }
+}
+
+exports.getEventByDate = async (request, response)=>{
+    try {
+
+        const {date} = request.query;
+
+        const events = await Event.findAll({
+           where: 
+           {
+               [Op.and]: [
+                   Sequelize.where(Sequelize.fn('DATE', Sequelize.col('datebegin')), '>=', date),
+                   Sequelize.where(Sequelize.fn('DATE', Sequelize.col('datefinal')), '<=', date)
+               ]
+           },
+           include: [{
+               model: EventPhoto,
+               attributes: ['name','is_archive']
+           }]
+        });
+
+        response.status(200).json(events);
+        
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }    
 }
 
 exports.findEvent = async (request, response)=>{

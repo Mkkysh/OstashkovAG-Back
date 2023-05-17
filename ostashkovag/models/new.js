@@ -29,4 +29,6 @@ const New = sequelize.define('New', {
 
 sequelize.sync();
 
+New.sync({alter: true});
+
 module.exports = New;

@@ -12,6 +12,8 @@ router.post('/find', jsonParser, eventController.findEvent);
 
 router.delete('/:id/delete', eventController.deleteEvent);
 
+router.get('/findbydate', jsonParser, eventController.getEventByDate);
+
 router.post('/add', upload
     .fields([{name: "pic", maxCount:1}]), 
     eventController.addEvent);
@@ -23,7 +25,7 @@ router.put('/:id/update', upload
     eventController.updateEvent);
 
 router.post('/:id/photorecord/add', upload
-    .fields([{name: "pic", maxCount:10}]),
+    .fields([{name: "pic", maxCount:30}]),
     eventController.addPhotoRecord);
 
 router.delete('/photorecord/delete/:name', 

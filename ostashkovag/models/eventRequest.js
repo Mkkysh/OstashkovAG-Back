@@ -2,41 +2,38 @@ const sequelize = require('../utils/database');
 const { Model, DataTypes } = require('sequelize');
 const User = require('./user');
 
-const IssueRequest = sequelize.define('IssueRequest', {
+const EventRequest = sequelize.define('EventRequest', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true
     },
-    type: {
+    text: {
         type: DataTypes.STRING,
-        allonNull: false
-    },
-    description: {
-        type: DataTypes.STRING,
-        allonNull: false
+        allowNull: false
     },
     id_user: {
         type: DataTypes.INTEGER,
-        allonNull: false,
+        allowNull: false,
         references: {
             model: User,
             key: 'id'
         }
     },
-    isClosed: {
-        type: DataTypes.BOOLEAN,
-        allonNull: false
-    } 
+    status: {
+        type: DataTypes.STRING,
+        allowNull: false
+    }
+    
 }, {
     timestamps: false,
 });
 
-User.hasMany(IssueRequest, {foreignKey: 'id_user'});
-IssueRequest.belongsTo(User, {foreignKey: 'id_user'});
+User.hasMany(EventRequest, {foreignKey: 'id_user'});
+EventRequest.belongsTo(User, {foreignKey: 'id_user'});
 
 sequelize.sync();
 
-IssueRequest.sync({alter: true});
+EventRequest.sync({alter: true});
 
-module.exports = IssueRequest;
+module.exports = EventRequest;

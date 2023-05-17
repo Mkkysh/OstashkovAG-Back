@@ -40,4 +40,6 @@ User.belongsToMany(Event, {through: EventUserArchive,
 
 sequelize.sync();
 
+EventUserArchive.sync({alter: true});
+
 module.exports = EventUserArchive;

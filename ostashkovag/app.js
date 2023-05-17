@@ -19,12 +19,14 @@ const eventRouter = require('./routes/eventRouter');
 const userRouter = require('./routes/userRouter');
 const newRouter = require('./routes/newRouter');
 const issueRouter = require('./routes/issueRouter');
+const eventRequestRouter = require('./routes/eventRequestRouter');
 
 
 app.use('/api/new', newRouter);
 app.use('/api/event', eventRouter);
 app.use('/api/user', userRouter);
 app.use('/api/issue', issueRouter);
+app.use('/api/eventrequest', eventRequestRouter);
 
 app.post('/api/user/event/tracker/add', jsonParser, (request, response) => {
     const id = response.locals.id;
@@ -92,32 +94,6 @@ app.delete('/api/user/event/tracker/delete', jsonParser, (request, response) => 
     });
 });
 
-app.post('/api/user/event/request/add', jsonParser, (request, response) => {
-  const id = response.locals.id;
-
-  var { name, datebegin, datefinal, description, type } = request.body;
-  
-  var query = `INSERT INTO public."EventRequest"
-  (name, datebegin, datefinal, description, id_user, type) VALUES
-  ('${name}', `;
-
-  if(datebegin) query += `'${datebegin}', `; else query += `NULL, `;
-  if(datefinal) query += `'${datefinal}', `; else query += `NULL, `;
-
-  query += `'${description}', ${id}, '${type}');`;
-
-  pool.query(query, (err, res)=>{
-      if(err){
-        console.log(err);
-        response.status(404);
-        return;
-      }
-      response.status(200).send({text: "success"});
-  });
-});
-
-
-
 app.get('/api/admin/event/request/get', jsonParser,(request, response) => {
       var query = `SELECT * FROM public."EventRequest" AS er
       LEFT JOIN public."User" AS u on er.id_user = u.id;`;
@@ -132,74 +108,8 @@ app.get('/api/admin/event/request/get', jsonParser,(request, response) => {
       });
 });
 
-app.post('/api/user/issue/add', jsonParser, (request, response) => {
-  const id = response.locals.id;
-
-  var { type, description } = request.body;
-  
-  var query = `INSERT INTO public."IssueRequest"
-  (type, description, id_user) VALUES
-  ('${type}', '${description}', ${id});`;
-
-  pool.query(query, (err, res)=>{
-      if(err){
-        console.log(err);
-        response.status(404);
-        return;
-      }
-      response.status(200).send({text: "success"});
-  });
-});
-
-app.get('/api/event/date', jsonParser,(request, response) =>{
-
-  var {date} = request.body;
-
-  var query = `SELECT ev.id, ev.name, ev.description, ev.address,
-  ev.datebegin, ev.datefinal, ev.type, ms.name 
-  AS photo FROM public."Event" AS ev
-  INNER JOIN public."MediaStorageEvent" AS mse
-  ON ev.id = mse.id_event
-  INNER JOIN public."MediaStorage" AS ms
-  ON ms.id = mse.id_media
-  WHERE DATE(${date ? `'${date}'` : `NOW()`}) = DATE(ev.datebegin)
-  AND mse.order_rows = 1;`;
-
-  pool.query(query, (err, res)=>{
-    if(err){
-      console.log(err);
-      response.status(404);
-      return;
-    }
-    response.status(200).send(res.rows);
-  });
-
-});
-
-app.get('/api/admin/issue/get', jsonParser, (request, response) => {
-  
-  var query = `SELECT * FROM public."IssueRequest" AS ir
-  LEFT JOIN public."User" AS u on ir.id_user = u.id;`;
-
-  pool.query(query, (err, res)=>{
-      if(err){
-        console.log(err);
-        response.status(404);
-        return;
-      }
-      response.status(200).send(res.rows);
-  });
-});
-
-
 app.get("/api/public/*", (req, res, next) => {
   res.sendFile("uploads/" + req.path.substring(12).replace('%20', ' '), { root: __dirname });
 });
 
-
 app.listen(PORT);
-
-
-// main();
-
-

@@ -108,7 +108,7 @@ exports.login = async (request, response) => {
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
         if(!isPasswordCorrect){
-            response.status(404).json({ message: 'Невкправильный пароль' });
+            response.status(404).json({ message: 'Неверный пароль' });
             return;
         }
 
