@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jsonParser = express.json();
 const userController = require('../controllers/userController');
-const {verifyToken} = require('../utils/auth');
+const { verifyToken } = require('../utils/auth');
 
 router.post('/:id/review', verifyToken,
     jsonParser, userController.addFeedback);

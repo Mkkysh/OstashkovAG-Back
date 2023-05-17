@@ -22,8 +22,11 @@ router.put('/:id/update', upload
     .fields([{name: "pic", maxCount:1}]),
     eventController.updateEvent);
 
-router.post('/:id/addPhotoRecord', upload
+router.post('/:id/photorecord/add', upload
     .fields([{name: "pic", maxCount:10}]),
     eventController.addPhotoRecord);
+
+router.delete('/photorecord/delete/:name', 
+    eventController.deletePhotoRecord);
 
 module.exports = router;

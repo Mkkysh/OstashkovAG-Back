@@ -12,7 +12,7 @@ exports.getFutureEvent = async (request, response)=>{
             },
             include: [{
                 model: EventPhoto,
-                attributes: ['name']
+                attributes: ['id','name']
             }]
         });
         response.status(200).json(events);
@@ -39,7 +39,7 @@ exports.getPastEvent = async (request, response)=>{
             distinct: true,
             include: [{
                 model: EventPhoto,
-                attributes: ['name', 'is_archive'],
+                attributes: ['id', 'name', 'is_archive'],
             }],
             limit: countEvents,
             offset: page * countEvents,
@@ -199,6 +199,29 @@ exports.addPhotoRecord = async (request, response)=>{
 
         response.status(200).json({message: 'Фото успешно добавлено'});
 
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.deletePhotoRecord = async (request, response)=>{
+    try {
+        
+        const name = request.params.name;
+
+        fs.unlink('./uploads/' + name, (err) => {
+            if (err) return;
+        });
+
+        await EventPhoto.destroy({
+           where: {
+               name: name
+           } 
+        });
+
+        response.status(200).json({message: 'Фото успешно удалено'});
+        
     } catch (err) {
         console.error(err);
         response.status(500).json({ message: 'Ошибка сервера' });
