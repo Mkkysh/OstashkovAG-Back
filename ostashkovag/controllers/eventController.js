@@ -76,8 +76,10 @@ exports.getEventByDate = async (request, response)=>{
            where: 
            {
                [Op.and]: [
-                   Sequelize.where(Sequelize.fn('DATE', Sequelize.col('datebegin')), '>=', date),
-                   Sequelize.where(Sequelize.fn('DATE', Sequelize.col('datefinal')), '<=', date)
+                   Sequelize.where(Sequelize.fn('DATE', 
+                        Sequelize.col('datebegin')), '>=', date),
+                   Sequelize.where(Sequelize.fn('DATE', 
+                        Sequelize.col('datefinal')), '<=', date)
                ]
            },
            include: [{

@@ -4,8 +4,8 @@ const jsonParser = express.json();
 const userController = require('../controllers/userController');
 const { verifyToken } = require('../utils/auth');
 
-router.post('/:id/review', verifyToken,
-    jsonParser, userController.addFeedback);
+// router.post('/:id/review', verifyToken,
+//     jsonParser, userController.addFeedback);
 
 router.get('/get', userController.getUsers);
 

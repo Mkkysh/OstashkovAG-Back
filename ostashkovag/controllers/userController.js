@@ -5,30 +5,30 @@ const { EventUserTracking, EventUserArchive,
     Event, User} = require('../models/index');
 const { raw } = require('express');
 
-exports.addFeedback = async (request, response) => {
-    try {
-        const id_event = request.params.id;
-        const id_user = request.user.id;
-        var { text } = request.body;
+// exports.addFeedback = async (request, response) => {
+//     try {
+//         const id_event = request.params.id;
+//         const id_user = request.user.id;
+//         var { text } = request.body;
         
-        const newFeedback = {
-            feedback: text,
-            date: Sequelize.literal('NOW()'),
-            id_event: id_event,
-            id_user: id_user
-        }
+//         const newFeedback = {
+//             feedback: text,
+//             date: Sequelize.literal('NOW()'),
+//             id_event: id_event,
+//             id_user: id_user
+//         }
 
-        await EventUserArchive.create(newFeedback);
+//         await EventUserArchive.create(newFeedback);
 
-        response.status(200).send({
-            message: 'Отзыв добавлен'
-        });
+//         response.status(200).send({
+//             message: 'Отзыв добавлен'
+//         });
 
-    } catch (err) {
-        console.error(err);
-        response.status(500).json({ message: 'Ошибка сервера' });
-      }
-}
+//     } catch (err) {
+//         console.error(err);
+//         response.status(500).json({ message: 'Ошибка сервера' });
+//       }
+// }
 
 exports.getUsers = async (request, response) => {
     try{
