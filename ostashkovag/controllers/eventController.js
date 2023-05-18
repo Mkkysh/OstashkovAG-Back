@@ -1,11 +1,10 @@
-const { Event, EventPhoto } = require('../models/index');
+const { Event, EventPhoto, User, EventUserArchive } = require('../models/index');
 const { Op } = require('sequelize');
 const Sequelize = require('sequelize');
 const fs = require('fs');
 
 
 exports.getFutureEvent = async (request, response)=>{
-    console.log('getFutureEvent');
     try {
         const events = await Event.findAll({
             where:{
@@ -123,13 +122,13 @@ exports.findEvent = async (request, response)=>{
 }
 
 exports.addEvent = async (request, response)=>{
-    var data = JSON.parse(request.body.data);
-    var photo = request.files.pic[0].filename;
-
-    var { name, description, 
-        datebegin, datefinal, address, type } = data;
-
+    
     try{
+        var photo = request.files.pic[0].filename;
+        var data = JSON.parse(request.body.data);
+
+        var { name, description, 
+            datebegin, datefinal, address, type } = data;
         const newEvent = {
             name: name,
             description: description,
@@ -153,8 +152,18 @@ exports.addEvent = async (request, response)=>{
         response.status(200).json({message: 'Событие успешно добавлено'});
 
     }catch(err){
-        console.error(err);
-        response.status(500).json({ message: 'Ошибка сервера' });
+        console.log(err);
+
+        try {
+            fs.unlink('./uploads/' + photo, (err) => {
+                console.log(err);
+            });
+        } catch (error) {
+            console.log(err);
+        }
+        finally{
+            response.status(500).json({ message: 'Ошибка сервера' });
+        }
     }
 }
 
@@ -168,6 +177,15 @@ exports.getEvent = async (request, response)=>{
             include: [{
                 model: EventPhoto,
                 attributes: ['name','is_archive']
+            },
+            {
+                model: User,
+                attributes: ['name'],
+                through: {
+                    model: EventUserArchive,
+                    attributes: ['feedback'],
+                    as: 'user_feedback'
+                }
             }]
         });
 

@@ -1,4 +1,4 @@
-const EventUserArchive = require('../models/eventFeedback');
+const { EventUserArchive } = require('../models/index');
 const Sequelize = require('sequelize');
 
 exports.addFeedback = async (request, response) => {

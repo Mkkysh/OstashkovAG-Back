@@ -35,11 +35,6 @@ Event.belongsToMany(User, {through: EventUserTracking,
 User.belongsToMany(Event, {through: EventUserTracking,
             foreignKey: 'id_user', otherKey: 'id_event'});
 
-// (async () => {
-//     const tmp = await Event.describe();
-//     console.log(tmp);
-// })();
-
 module.exports = {
     User,
     Event,

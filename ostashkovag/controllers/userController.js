@@ -4,31 +4,7 @@ const auth = require('../utils/auth');
 const { EventUserTracking, EventUserArchive, 
     Event, User} = require('../models/index');
 const { raw } = require('express');
-
-// exports.addFeedback = async (request, response) => {
-//     try {
-//         const id_event = request.params.id;
-//         const id_user = request.user.id;
-//         var { text } = request.body;
-        
-//         const newFeedback = {
-//             feedback: text,
-//             date: Sequelize.literal('NOW()'),
-//             id_event: id_event,
-//             id_user: id_user
-//         }
-
-//         await EventUserArchive.create(newFeedback);
-
-//         response.status(200).send({
-//             message: 'Отзыв добавлен'
-//         });
-
-//     } catch (err) {
-//         console.error(err);
-//         response.status(500).json({ message: 'Ошибка сервера' });
-//       }
-// }
+const fs = require('fs');
 
 exports.getUsers = async (request, response) => {
     try{
@@ -269,6 +245,89 @@ exports.getTracking = async (request, response) => {
 
         response.status(200).json(tracking);
 
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.addPhoto = async (request, response) => {
+    try {
+
+        var photo = request.files.pic[0].filename;
+        const id = request.user.id;
+
+        await User.update({
+            photo: photo
+        },
+        {
+            where: {
+                id: id
+            }
+        });
+
+        response.status(200).json({message: 'Фото добавлено'});
+        
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.updateData = async (request, response) => {
+    try {
+        const id = request.user.id;
+        const photo = request.files?.pic;
+
+        const data = request.body.data ? JSON.parse(request.body.data) : undefined;
+
+        if(data){
+            await User.update(data,{
+                where: {
+                    id: id
+                }
+            });
+        }
+
+        console.log("photo");
+        
+        if(photo){
+            const user = await User.findOne({
+                where: {
+                    id: id
+                }
+            });
+
+            const oldPhoto = user.photo;
+            user.photo = photo[0].filename;
+            user.save();
+
+            fs.unlink('./uploads/' + oldPhoto, (err) => {
+                if (err) throw err;
+            });
+        }
+
+        response.status(200).json({message: 'Данные пользователя обновлены'});
+
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+exports.getUser = async (request, response) => {
+    try {
+
+        const id = request.user.id;
+
+        const user = await User.findOne({
+            where: {
+                id: id
+            } 
+        });
+
+        response.status(200).json(user);
+        
     } catch (err) {
         console.error(err);
         response.status(500).json({ message: 'Ошибка сервера' });
