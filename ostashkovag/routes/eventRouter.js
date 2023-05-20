@@ -4,15 +4,13 @@ const jsonParser = express.json();
 const upload = require('../utils/uploads');
 const eventController = require('../controllers/eventController');
 
-router.get('/future', eventController.getFutureEvent);
+//router.get('/future', eventController.getFutureEvent);
 
-router.get('/past', jsonParser, eventController.getPastEvent);
+router.get('/get', jsonParser, eventController.getEvents);
 
 router.post('/find', jsonParser, eventController.findEvent);
 
 router.delete('/:id/delete', eventController.deleteEvent);
-
-router.get('/findbydate', jsonParser, eventController.getEventByDate);
 
 router.post('/add', upload
     .fields([{name: "pic", maxCount:1}]), 

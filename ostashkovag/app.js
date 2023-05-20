@@ -3,13 +3,22 @@ const express = require("express");
 const cors = require("cors");
 const coockieParser = require("cookie-parser");
 const sequelize = require("./utils/database");
-const transporter = require("./utils/mail");
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
+const cron = require('node-cron');
+const transporter = require('./utils/mail');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use(cors());
 app.use(coockieParser());
+
+app.use(
+  '/api-docs',
+  swaggerUi.serve, 
+  swaggerUi.setup(swaggerDocument)
+);
 
 const eventRouter = require('./routes/eventRouter');
 const userRouter = require('./routes/userRouter');

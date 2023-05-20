@@ -2,58 +2,53 @@ const { Event, EventPhoto, User, EventUserArchive } = require('../models/index')
 const { Op } = require('sequelize');
 const Sequelize = require('sequelize');
 const fs = require('fs');
+const { log } = require('console');
 
+exports.getEvents = async (request, response)=>{
 
-exports.getFutureEvent = async (request, response)=>{
-    try {
-        const events = await Event.findAll({
-            where:{
-                isarchive: false,
-            },
-            include: [{
-                model: EventPhoto,
-                attributes: ['id','name']
-            }]
-        });
-        response.status(200).json(events);
-      } catch (err) {
-        console.error(err);
-        response.status(500).json({ message: 'Ошибка сервера' });
-      }
-}
-
-exports.getPastEvent = async (request, response)=>{
-
-    var {page, type, search} = request.query;
+    var {page, type, search, isarchive, 
+        sortDir, date, sort} = request.query;
     page = !page ? 0 : page;
-    const countEvents = 3;
+    const countEvents = 2;
 
-    filter = {
-        isarchive: true,
-    };
-    if (type) filter.type = type;
+    var filter = {};
+    if (type) filter.type = type; 
+    if (isarchive!==undefined) filter.isarchive = isarchive;
+    
+    var dateFilter = date ? [ 
+        Sequelize.where(Sequelize.fn('DATE', 
+            Sequelize.col('datebegin')), '<=', date),
+        Sequelize.where(Sequelize.fn('DATE', 
+            Sequelize.col('datefinal')), '>=', date) ] : [];
+
     if (search) search = search.split(' ').map(el => {return {
         name: {
             [Op.iLike]: '%' + el + '%'
             }}
-        });
+    });
     else search = [];
+
+    var order = []; if(sort) order.push(sort); else order.push('datebegin');
+    if(sortDir) order.push(sortDir); else order.push('DESC');
 
     try {
         const {count, rows} = await Event.findAndCountAll({
             where: {...filter,
-                [Op.and]:search
+                [Op.and]: [...search, ...dateFilter]
             },
-            distinct: true,
             include: [{
                 model: EventPhoto,
-                attributes: ['id', 'name', 'is_archive'],
+                attributes: ['name'],
+                where: {
+                    is_archive: false
+                }
             }],
             limit: countEvents,
             offset: page * countEvents,
             order: [
-                ['datebegin', 'DESC']
-            ]
+                order
+            ],
+            raw: true
         });
 
         countPages = Math.ceil(count / countEvents);
@@ -64,35 +59,6 @@ exports.getPastEvent = async (request, response)=>{
         console.error(err);
         response.status(500).json({ message: 'Ошибка сервера' });
     }
-}
-
-exports.getEventByDate = async (request, response)=>{
-    try {
-
-        const {date} = request.query;
-
-        const events = await Event.findAll({
-           where: 
-           {
-               [Op.and]: [
-                   Sequelize.where(Sequelize.fn('DATE', 
-                        Sequelize.col('datebegin')), '>=', date),
-                   Sequelize.where(Sequelize.fn('DATE', 
-                        Sequelize.col('datefinal')), '<=', date)
-               ]
-           },
-           include: [{
-               model: EventPhoto,
-               attributes: ['name','is_archive']
-           }]
-        });
-
-        response.status(200).json(events);
-        
-    } catch (err) {
-        console.error(err);
-        response.status(500).json({ message: 'Ошибка сервера' });
-    }    
 }
 
 exports.findEvent = async (request, response)=>{
@@ -107,12 +73,9 @@ exports.findEvent = async (request, response)=>{
     try {
         const event = await Event.findAll({
             where:{
-                [Op.and]:text
+                [Op.and]:text,
             },
-            include: [{
-                model: EventPhoto,
-                attributes: ['name','is_archive']
-            }]
+            attributes: ['name']
         });
         response.status(200).json(event);
       } catch (err) {
@@ -170,6 +133,7 @@ exports.addEvent = async (request, response)=>{
 exports.getEvent = async (request, response)=>{
     try {
         const id = request.params.id;
+
         const event = await Event.findOne({
             where: {
                 id: id
@@ -184,9 +148,9 @@ exports.getEvent = async (request, response)=>{
                 through: {
                     model: EventUserArchive,
                     attributes: ['feedback'],
-                    as: 'user_feedback'
-                }
-            }]
+                    as: 'user_feedback',
+                },
+            }],
         });
 
         response.status(200).json(event);

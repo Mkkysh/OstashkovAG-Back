@@ -57,3 +57,28 @@ exports.verifyToken = (request, response, next) => {
         return response.status(401).send({ message: 'Неавторизованный доступ' });
     }
 }
+
+exports.verifyAdminToken = (request, response, next) => {
+    try {
+        const header = request.headers['authorization'];
+        const accessToken = header.split(' ')[1];
+        if (!accessToken) {
+            return response.status(401).send({ message: 'Неавторизованный доступ' });
+        }
+        const decoded = verifyAccessToken(accessToken);
+        if (!decoded) {
+            return response.status(401).send({ message: 'Неавторизованный доступ' });
+        }
+
+        if (decoded.role !== 'admin') {
+            return response.status(401).send({ message: 'Неавторизованный доступ' });
+        }
+
+        request.user = decoded;
+        next();
+    }
+    catch(err){
+        console.log(err);
+        return response.status(401).send({ message: 'Неавторизованный доступ' });
+    }
+}

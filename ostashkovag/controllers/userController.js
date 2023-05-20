@@ -3,16 +3,37 @@ const bcrypt = require('bcrypt');
 const auth = require('../utils/auth');
 const { EventUserTracking, EventUserArchive, 
     Event, User} = require('../models/index');
-const { raw } = require('express');
+const { Op } = require('sequelize');
 const fs = require('fs');
+const validator = require("email-validator");
+const { log } = require('console');
+
 
 exports.getUsers = async (request, response) => {
     try{
-        const users = await User.findAll();
+
+        var email = request.query.email;
+
+        if (email) {
+            email = email.split(' ').map(el => {return {
+                        email: {
+                    [Op.iLike]: '%' + el + '%'
+                }}
+            });
+            email = {
+                [Op.and]: email
+            };
+        }   
+        else email = {};
+
+        const users = await User.findAll({
+            where: email,
+            attributes: ['name', 'email']
+        });
         response.status(200).json(users);
     }
     catch (err) {
-        console.error(err);
+        console.log(err);
         response.status(500).json({ message: 'Ошибка сервера' });
     }
 }
@@ -20,6 +41,11 @@ exports.getUsers = async (request, response) => {
 exports.signup = async (request, response) => {
     var { name, email, password, phone} = request.body;
     try {
+
+        if(!validator.validate(email)){
+            response.status(500).json({ message: 'Некорректный email' });
+            return
+        }
 
         checkUser = await User.findOne({
             where: {
@@ -56,8 +82,7 @@ exports.signup = async (request, response) => {
 
         response.status(200).json({
             message: 'Пользователь создан',
-            tokens: tokens,
-            user: user
+            tokens: tokens
         });
 
     } catch (err) {
@@ -103,8 +128,7 @@ exports.login = async (request, response) => {
 
         response.status(200).json({
             message: 'Пользователь вошел',
-            tokens: tokens,
-            user: user
+            tokens: tokens
         });
 
     } catch (err) {
@@ -124,7 +148,7 @@ exports.logout = async (request, response) => {
         user.refreshToken = Sequelize.literal('NULL');
         user.save();
         response.clearCookie('refreshToken').status(200).json({
-            user: user
+            message: 'Пользователь вышел'
         });
 
     } catch (err) {
@@ -176,8 +200,7 @@ exports.refresh = async (request, response) => {
 
         response.status(200).json({
             message: 'Перезапись токена',
-            tokens: tokens,
-            user: user
+            tokens: tokens
         });
 
     } catch (err) {
@@ -318,6 +341,8 @@ exports.updateData = async (request, response) => {
 exports.getUser = async (request, response) => {
     try {
 
+        console.log(request.user);
+
         const id = request.user.id;
 
         const user = await User.findOne({
@@ -328,6 +353,29 @@ exports.getUser = async (request, response) => {
 
         response.status(200).json(user);
         
+    } catch (err) {
+        console.error(err);
+        response.status(500).json({ message: 'Ошибка сервера' });
+    }
+}
+
+
+exports.addAdmin = async (request, response)=>{
+    try {
+
+        const id = request.params.id;
+
+        await User.update({
+           role: 'admin' 
+        },
+        {
+            where: {
+                id: id
+            }
+        });
+        
+        response.status(200).json({message: 'Админ добавлен'});
+
     } catch (err) {
         console.error(err);
         response.status(500).json({ message: 'Ошибка сервера' });

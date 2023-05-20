@@ -1,0 +1,28 @@
+openapi: 3.0
+info:
+  title: Swa
+  description: OpenAPI 
+  termsOfService: http://swagger.io/terms/
+externalDocs:
+  description: "Find out more about Swagger"
+  url: http://swagger.io
+servers:
+  - url: https://petstore3.swagger.io/api/v3
+tags:
+  - name: User
+    description: User
+paths:
+  /get:
+    get:
+      tags:
+        - User
+      summary: Get user by user name
+      parameters:
+        - name: email
+          in: query
+          description: User email
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
