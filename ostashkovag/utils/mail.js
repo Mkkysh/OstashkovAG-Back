@@ -17,7 +17,7 @@ return nodemailer.createTransport({
 });
 } )();
 
-cron.schedule('5 * * * * * ',  async ()=>{
+cron.schedule('* 10 * * * * ',  async ()=>{
     try{
             const event = await Event.findAll({
             where: Sequelize.where(Sequelize.fn('DATE', 
