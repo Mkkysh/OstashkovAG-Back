@@ -274,29 +274,6 @@ exports.getTracking = async (request, response) => {
     }
 }
 
-exports.addPhoto = async (request, response) => {
-    try {
-
-        var photo = request.files.pic[0].filename;
-        const id = request.user.id;
-
-        await User.update({
-            photo: photo
-        },
-        {
-            where: {
-                id: id
-            }
-        });
-
-        response.status(200).json({message: 'Фото добавлено'});
-        
-    } catch (err) {
-        console.error(err);
-        response.status(500).json({ message: 'Ошибка сервера' });
-    }
-}
-
 exports.updateData = async (request, response) => {
     try {
         const id = request.user.id;
