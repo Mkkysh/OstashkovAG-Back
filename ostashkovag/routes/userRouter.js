@@ -5,7 +5,8 @@ const userController = require('../controllers/userController');
 const { verifyToken, verifyAdminToken } = require('../utils/auth');
 const uploads = require('../utils/uploads');
 
-router.get('/get', userController.getUsers);
+router.get('/get', verifyAdminToken,
+    userController.getUsers);
 
 router.post('/signup', jsonParser, userController.signup);
 
@@ -38,6 +39,8 @@ router.put('/update', uploads
 
 router.get('/profile', verifyToken, userController.getUser);
 
-router.put('/:id/addadmin', userController.addAdmin);
+router.put('/:id/addadmin', 
+    verifyAdminToken,
+    userController.addAdmin);
 
 module.exports = router;
