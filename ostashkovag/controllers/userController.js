@@ -305,6 +305,7 @@ exports.updateData = async (request, response) => {
         const data = request.body.data ? JSON.parse(request.body.data) : undefined;
 
         if(data){
+            if(data.password)  data.password = await bcrypt.hash(data.password, 10);
             await User.update(data,{
                 where: {
                     id: id
