@@ -21,16 +21,11 @@ userController.logout);
 router.post('/tracking/:id', verifyToken, 
     userController.addTracking);
 
-router.delete('/tracking/:id', verifyToken,
+router.delete('/tracking/:id/delete', verifyToken,
     userController.deleteTracking);
 
 router.get('/tracking', verifyToken,
     userController.getTracking);
-
-router.post('/photo/add', uploads
-    .fields([{name: "pic", maxCount:1}]),
-    verifyToken,
-    userController.addPhoto);
 
 router.put('/update', uploads
     .fields([{name: "pic", maxCount:1}]),

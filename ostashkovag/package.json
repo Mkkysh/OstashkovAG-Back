@@ -24,7 +24,9 @@
     "pg": "^8.10.0",
     "sequelize": "^6.31.1",
     "sequelize-mysql-set-timezone-fix": "^3.13.1",
+    "swagger-autogen": "^2.23.1",
     "swagger-jsdoc": "^6.2.8",
+    "swagger-node-codegen": "^1.6.3",
     "swagger-ui-express": "^4.6.3"
   }
 }
